@@ -1,104 +1,237 @@
+:root {
+  --cartao: rgba(14, 8, 40, 0.86);
+  --cartao-borda: rgba(255, 179, 44, 0.55);
+  --texto: #ffffff;
+  --texto-suave: #e6defa;
+  --ouro: #ffb32c;
+  --ouro-claro: #ffd27a;
+  --ouro-escuro: #1d0f00;
+  --ciano: #7fe3ff;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
 body {
   margin: 0;
-  font-family: Verdana, sans-serif;
+  font-family: "Nunito", Verdana, sans-serif;
+  color: var(--texto);
   overflow: hidden;
 }
 
+/* ===== Telas (menu, sobre, instruções, jogos) =====*/
 #menu, #instrucoes, #sobre, #jogos {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center; /* Centraliza horizontalmente */
-  align-items: center; /* Centraliza verticalmente */
-  flex-direction: column;
-  color: white;
+  inset: 0;
   z-index: 10;
-  text-align: center;
-  overflow: auto; /* Permite rolagem */
-}
-
-#menu, #instrucoes, #sobre, #jogos  {
-  background: url('../img/fundo.gif') no-repeat center center/cover;
-}
-
-#menu h1, #menu h3, #instrucoes h1, #sobre h1, h2, h3 {
-  text-shadow: 5px 5px 5px #000;
-}
-
-#menu button, #instrucoes button, #sobre button, #jogos button {
-  padding: 10px 20px;
-  font-size: 20px;
-  margin: 10px;
-  cursor: pointer;
-  background-color: #fff;
-  border: 3px solid lime;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-weight: bold;
-  width: 300px; 
-  border-radius: 20px;
+  align-items: center;
+  padding: 16px;
+  overflow: auto;
+  background:
+    linear-gradient(rgba(6, 3, 24, 0.25), rgba(6, 3, 24, 0.45)),
+    url('../img/fundo.gif') no-repeat center center / cover;
+  image-rendering: pixelated;  
 }
 
-#menu button a {
-  text-decoration: none;
-  color: inherit;
+#instrucoes, #sobre, #jogos { display: none; }
+
+/* ===== Cartão de conteúdo  ===== */
+.cartao {
+  margin: auto;
+  width: min(100%, 620px);
+  padding: 36px 32px;
+  text-align: center;
+  background: var(--cartao);
+  border: 2px solid var(--cartao-borda);
+  border-radius: 24px;
+  box-shadow: 0 0 0 6px rgba(14, 8, 40, 0.35), 0 24px 60px rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  image-rendering: auto;
+}
+.cartao.largo { width: min(100%, 760px); text-align: left; }
+.cartao.largo h1 { text-align: center; }
+.cartao.instrucoes { text-align: left; }
+.cartao.instrucoes h1 { text-align: center; }
+
+/* ===== Títulos ===== */
+h1 {
+  font-family: "Baloo 2", "Nunito", sans-serif;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 12px;
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+  color: var(--ouro);
+  text-shadow: 0 2px 0 #000;
+}
+
+#menu h1 .linha-pequena {
+  display: block;
+  font-size: 0.45em;
+  font-weight: 600;
+  color: var(--ciano);
+  letter-spacing: 0.02em;
+}
+#menu h1 .linha-grande { display: block; font-size: 1.45em; }
+#menu h1 .linha-uni {
+  display: block;
+  font-size: 0.48em;
+  font-weight: 600;
+  color: var(--texto-suave);
+  margin-top: 6px;
+}
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  margin: 0 0 26px;
+}
+
+h3 {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--ciano);
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.cartao p {
+  font-size: 1.02rem;
+  line-height: 1.75;
+  margin: 0 0 14px;
+  max-width: 68ch;
+}
+.cartao p.ola {
+  font-family: "Baloo 2", sans-serif;
+  font-size: 1.3rem;
+  color: var(--ciano);
+}
+
+/* Instruções numeradas */
+ol { list-style: none; counter-reset: passo; padding: 0; margin: 0 0 22px; }
+ol li {
+  counter-increment: passo;
+  position: relative;
+  padding: 12px 14px 12px 58px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+ol li::before {
+  content: counter(passo);
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--ouro);
+  color: var(--ouro-escuro);
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+kbd {
+  background: #fff;
+  color: #111;
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-family: inherit;
+  font-weight: 700;
+}
+
+/* ===== Botões ===== */
+.acoes { display: flex; flex-direction: column; gap: 12px; }
+
+.cartao button {
   display: block;
   width: 100%;
-  height: 100%;
-  text-align: center;
-  line-height: 100%;
+  margin: 0 0 12px;
+  padding: 14px 22px;
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  color: var(--ouro-escuro);
+  background: var(--ouro);
+  border: 2px solid var(--ouro);
+  border-radius: 14px;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.acoes button { margin: 0; }
+
+.cartao button:hover {
+  background: var(--ouro-claro);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(255, 179, 44, 0.35);
+}
+.cartao button:active { transform: translateY(0); }
+button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+/* Botões "voltar" */
+#back-to-menu-instrucoes, #back-to-menu-sobre, #back-to-menu-jogos {
+  background: transparent !important;
+  color: var(--texto) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  margin: 8px 0 0 !important;
+}
+#back-to-menu-instrucoes:hover, #back-to-menu-sobre:hover, #back-to-menu-jogos:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: none !important;
 }
 
-#instrucoes, #sobre, #jogos {
-  display: none;
-}
-
+/* Botão de música */
 .music-button {
   position: fixed;
-  bottom: 10px;
-  left: 10px;
-  padding: 10px;
-  background-color: #fff;
-  border: 3px solid lime;
+  bottom: 14px;
+  left: 14px;
+  z-index: 30;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #fff;
+  background: rgba(14, 8, 40, 0.9);
+  border: 2px solid var(--ouro);
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 30; /* Certifique-se de que este botão esteja em uma camada superior */
 }
+.music-button:hover { background: #2a1a66; }
+.music-button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
-/*Efeito de neve caindo */
+/* ===== Neve (flocos criados pelo script.js) ===== */
 .snow {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   pointer-events: none;
   z-index: 15;
   background: transparent;
 }
-
 .snowflake {
   position: absolute;
   top: -10px;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   background: white;
   border-radius: 50%;
   opacity: 0.8;
   pointer-events: none;
   animation: fall 10s linear infinite;
 }
-
 @keyframes fall {
-  to {
-    transform: translateY(100vh);
-  }
+  to { transform: translateY(100vh); }
+}
+
+@media (max-width: 480px) {
+  .cartao { padding: 26px 20px; border-radius: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .snowflake { display: none; }
+  .cartao button { transition: none; }
 }

@@ -1,21 +1,32 @@
 // Música de fundo
 document.addEventListener('DOMContentLoaded', function() {
-  var soundEntity = document.getElementById('sound-entity');
+  var musica = document.getElementById('background-music');
   var musicControlButton = document.getElementById('music-control');
 
+  function atualizarBotao() {
+    musicControlButton.textContent = musica.paused ? '♪ Tocar música' : '❚❚ Pausar música';
+  }
+
   musicControlButton.addEventListener('click', function() {
-    var audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioContext.state === 'suspended') {
-      audioContext.resume();
-    }
-    if (soundEntity.components.sound.isPlaying) {
-      soundEntity.components.sound.pauseSound();
-      musicControlButton.textContent = 'Play';
+    if (musica.paused) {
+      // O Chrome só permite tocar áudio depois de um clique do usuário (é o caso aqui)
+      musica.play().then(atualizarBotao).catch(function(erro) {
+        console.error('Não foi possível tocar a música:', erro);
+        musicControlButton.textContent = 'Música indisponível';
+      });
     } else {
-      soundEntity.components.sound.playSound();
-      musicControlButton.textContent = 'Pause';
+      musica.pause();
+      atualizarBotao();
     }
   });
+
+  // Se o arquivo de áudio não for encontrado, avisa no botão e no console
+  musica.addEventListener('error', function() {
+    console.error('Arquivo de áudio não encontrado: ' + musica.currentSrc);
+    musicControlButton.textContent = 'Música indisponível';
+  });
+
+  atualizarBotao();
 
   // Navegação das Sessões do Menu
   document.getElementById('show-about').addEventListener('click', function() {

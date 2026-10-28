@@ -12,21 +12,57 @@
 </head>
 <body>
   <a-scene>
-    <!-- Camera and Cursor -->
+    <!-- Câmera, cursor e HUD -->
     <a-camera position="0 1.6 0">
       <a-cursor id="cursor" color="red"></a-cursor>
+
+      <a-entity id="hud" position="0 0 -1.6" scale="0.65 0.65 0.65">
+
+        <!-- Linha no topo: Tempo | Enunciado | Pontos -->
+        <a-entity position="-1.72 1.68 0">
+          <a-plane width="1.64" height="0.56" position="0 0 -0.002" material="shader: flat; color: #ffb32c"></a-plane>
+          <a-plane width="1.6" height="0.52" material="shader: flat; color: #071540; opacity: 0.92; transparent: true"></a-plane>
+          <a-text value="Tempo" color="#ffd27a" align="center" width="2.6" position="0 0.16 0.01"></a-text>
+          <a-text id="timer" value="10:00" color="#ffffff" align="center" width="5.2" position="0 -0.07 0.01"></a-text>
+        </a-entity>
+
+        <a-entity id="prompt-panel" position="0 1.68 0">
+          <a-plane width="1.64" height="0.56" position="0 0 -0.002" material="shader: flat; color: #7fe3ff"></a-plane>
+          <a-plane width="1.6" height="0.52" material="shader: flat; color: #071540; opacity: 0.92; transparent: true"></a-plane>
+          <a-text value="Traduza" color="#c4f1ff" align="center" width="2.6" position="0 0.16 0.01"></a-text>
+          <a-text id="portuguese-word" value="-" color="#ffffff" align="center" width="5.2" position="0 -0.07 0.01"></a-text>
+        </a-entity>
+
+        <a-entity position="1.72 1.68 0">
+          <a-plane width="1.64" height="0.56" position="0 0 -0.002" material="shader: flat; color: #ffb32c"></a-plane>
+          <a-plane width="1.6" height="0.52" material="shader: flat; color: #071540; opacity: 0.92; transparent: true"></a-plane>
+          <a-text value="Pontos" color="#ffd27a" align="center" width="2.6" position="0 0.16 0.01"></a-text>
+          <a-text id="score" value="0" color="#ffffff" align="center" width="5.2" position="0 -0.07 0.01"></a-text>
+        </a-entity>
+
+        <!-- Mensagens rápidas (acertou, errou...) -->
+        <a-text id="feedback" value="" color="#ffd27a" align="center" width="4.2" position="0 -1.15 0.01"></a-text>
+
+        <!-- Palavra a descobrir: uma casa para cada letra, com linha embaixo -->
+        <a-entity id="word-board" position="0 -1.6 0" visible="false"></a-entity>
+      </a-entity>
     </a-camera>
 
-    <!-- Environment: Forest -->
+    <!-- Ambiente: floresta -->
     <a-entity environment="preset: forest; groundColor: #445; grid: cross"></a-entity>
 
-    <!-- Start Marker (Red Tower) -->
-    <a-entity id="start-marker" position="0 1 0">
-      <a-cylinder height="30" radius="1" color="red"></a-cylinder>
-      <a-text value="Start Here" color="#FFF" position="0 15 0" align="center"></a-text>
+    <!-- Marcador de início: torre vermelha -->
+    <a-entity id="start-marker" position="0 0 0">
+      <a-cylinder position="0 15 0" height="30" radius="0.8" color="#e63946"></a-cylinder>
+      <a-sphere position="0 30.6 0" radius="1.3" material="shader: flat; color: #ffb32c"></a-sphere>
+      <a-entity position="0 35 0" look-at="[camera]">
+        <a-plane width="15" height="3.4" position="0 0 -0.05" material="shader: flat; color: #ffb32c"></a-plane>
+        <a-plane width="14.6" height="3" material="shader: flat; color: #071540"></a-plane>
+        <a-text value="Ponto de partida" color="#ffffff" align="center" width="34" position="0 0 0.05"></a-text>
+      </a-entity>
     </a-entity>
 
-    <!-- Instruction Card -->
+    <!-- Cartão de instruções -->
     <a-entity id="instruction-card" position="0 2 -3">
       <a-plane color="#000" width="4" height="3" material="side: double">
         <a-text value="Bem-vindo ao Caca ao Tesouro do Mundo em 3D da UEPG!" position="0 1 0" align="center" color="#FFF" width="3.5"></a-text>
@@ -36,24 +72,22 @@
       </a-plane>
     </a-entity>
 
-    <!-- Timer Text (Always Visible) -->
-    <a-text id="timer" value="Time: 600" color="#FFF" position="0 5 -4" width="6" visible="true"></a-text>
-
-    <!-- Score Text -->
-    <a-text id="score" value="Score: 0" color="#FFF" position="2 5 -4" width="6" visible="true"></a-text>
-
-    <!-- Portuguese Word to Translate -->
-    <a-text id="portuguese-word" value="" color="#FFF" position="0 2.5 -3" width="6" visible="false"></a-text>
-
-    <!-- Hidden Word to Guess -->
-    <a-text id="hidden-word" value="" color="#FFF" position="0 2 -3" width="6" visible="false"></a-text>
-
-    <!-- Grid of Letters Spread in 3D Space (Initially Hidden) -->
+    <!-- Letras espalhadas em 3D (inicialmente escondidas) -->
     <a-entity id="letter-grid" visible="false"></a-entity>
-
   </a-scene>
 
 <script>
+  // Faz a entidade girar para ficar sempre de frente para a câmera
+  AFRAME.registerComponent('face-camera', {
+    init: function () { this.pos = new AFRAME.THREE.Vector3(); },
+    tick: function () {
+      const camera = this.el.sceneEl.camera;
+      if (!camera) return;
+      camera.getWorldPosition(this.pos);
+      this.el.object3D.lookAt(this.pos);
+    }
+  });
+
   const words = [
     {portuguese: "Cachorro", english: "DOG"},
     {portuguese: "Casa", english: "HOUSE"},
@@ -66,157 +100,246 @@
     {portuguese: "Janela", english: "WINDOW"}
   ];
 
+  const TEMPO_POR_PALAVRA = 600; // 10 minutos
+  const COR_LETRA = '#4CC3D9';
+  const COR_LETRA_SELECIONADA = '#FFD700';
+
   let currentWordIndex = 0;
   let guessedLetters = [];
   let score = 0;
-  let timeLeft = 600; // 10 minutos
+  let timeLeft = TEMPO_POR_PALAVRA;
   let countdown;
   let selectedLetter = null;
-  let gameStarted = false; // Adicionar uma flag para verificar se o jogo já começou
+  let gameStarted = false;
+  let gameOver = false;
+  let feedbackTimeout = null;
+  let slotLetters = [];     // textos de cada casa da palavra
+  let slotUnderlines = [];  // linhas embaixo de cada casa
+
   const timerElement = document.querySelector('#timer');
-  const hiddenWordElement = document.querySelector('#hidden-word');
   const portugueseWordElement = document.querySelector('#portuguese-word');
   const scoreElement = document.querySelector('#score');
+  const feedbackElement = document.querySelector('#feedback');
+  const boardElement = document.querySelector('#word-board');
 
-  // Função para inicializar a palavra a ser adivinhada
+  // ---------- HUD ----------
+  function formatTime(total) {
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function updateTimerDisplay() {
+    timerElement.setAttribute('value', formatTime(timeLeft));
+    // Fica vermelho no último minuto
+    timerElement.setAttribute('color', timeLeft <= 60 ? '#ff6b6b' : '#ffffff');
+  }
+
+  function updateScoreDisplay() {
+    scoreElement.setAttribute('value', String(score));
+  }
+
+  function showFeedback(message, duration) {
+    feedbackElement.setAttribute('value', message);
+    clearTimeout(feedbackTimeout);
+    if (duration) {
+      feedbackTimeout = setTimeout(function() {
+        feedbackElement.setAttribute('value', '');
+      }, duration);
+    }
+  }
+
+  // ---------- Quadro da palavra ----------
+  function buildBoard(length) {
+    while (boardElement.firstChild) {
+      boardElement.removeChild(boardElement.firstChild);
+    }
+    slotLetters = [];
+    slotUnderlines = [];
+
+    const slotW = 0.26;
+    const gap = 0.09;
+    const total = length * slotW + (length - 1) * gap;
+    const scale = Math.min(1, 2.6 / total); // encolhe se a palavra for muito longa
+    boardElement.setAttribute('scale', `${scale} ${scale} 1`);
+
+    for (let i = 0; i < length; i++) {
+      const x = -total / 2 + slotW / 2 + i * (slotW + gap);
+      const slot = document.createElement('a-entity');
+      slot.setAttribute('position', `${x} 0 0`);
+      slot.innerHTML = `
+        <a-plane width="0.26" height="0.36" material="shader: flat; color: #071540; opacity: 0.9; transparent: true"></a-plane>
+        <a-plane class="underline" width="0.26" height="0.04" position="0 -0.14 0.005" material="shader: flat; color: #ffb32c"></a-plane>
+        <a-text class="slot-letter" value="" align="center" color="#ffffff" width="6" position="0 0.01 0.01"></a-text>
+      `;
+      boardElement.appendChild(slot);
+      slotLetters.push(slot.querySelector('.slot-letter'));
+      slotUnderlines.push(slot.querySelector('.underline'));
+    }
+  }
+
+  function renderBoard() {
+    guessedLetters.forEach(function(letter, i) {
+      const filled = letter !== "_";
+      slotLetters[i].setAttribute('value', filled ? letter : '');
+      // Linha dourada = falta preencher; verde = letra descoberta
+      slotUnderlines[i].setAttribute('material', 'shader: flat; color: ' + (filled ? '#4ade80' : '#ffb32c'));
+    });
+  }
+
+  // ---------- Lógica do jogo ----------
   function initializeWord() {
-      const word = words[currentWordIndex];
-      guessedLetters = Array(word.english.length).fill("_");
-      hiddenWordElement.setAttribute('value', guessedLetters.join(" "));
-      portugueseWordElement.setAttribute('value', `Traduza: ${word.portuguese}
-        Procure as esferas em azul com suas letras espalhadas na floresta! Boa sorte!`);
-      
-      // Remover letras existentes do grid
-      const letterGrid = document.querySelector('#letter-grid');
-      while (letterGrid.firstChild) {
-          letterGrid.removeChild(letterGrid.firstChild);
-      }
+    const word = words[currentWordIndex];
+    guessedLetters = Array(word.english.length).fill("_");
+    portugueseWordElement.setAttribute('value', word.portuguese);
+    buildBoard(word.english.length);
+    renderBoard();
 
-      // Adicionar letras da palavra em posições aleatórias no grid 3D
-      const positions = [];
-      const gridSize = 96; // Distância entre as letras reduzida para 3 vezes menos
-      for (let i = 0; i < word.english.length; i++) {
-          let position;
-          do {
-              position = {
-                  x: (Math.random() - 0.5) * gridSize,
-                  y: Math.random() * 2 + 1, // Altura entre 1 e 3
-                  z: (Math.random() - 0.5) * gridSize
-              };
-          } while (positions.find(p => p.x === position.x && p.z === position.z)); // Evitar sobreposição
+    // Remover letras existentes do grid
+    const letterGrid = document.querySelector('#letter-grid');
+    while (letterGrid.firstChild) {
+      letterGrid.removeChild(letterGrid.firstChild);
+    }
 
-          positions.push(position);
+    // Adicionar letras da palavra em posições aleatórias no grid 3D
+    const positions = [];
+    const gridSize = 96;
+    for (let i = 0; i < word.english.length; i++) {
+      let position;
+      do {
+        position = {
+          x: (Math.random() - 0.5) * gridSize,
+          y: Math.random() * 2 + 1, // Altura entre 1 e 3
+          z: (Math.random() - 0.5) * gridSize
+        };
+      } while (positions.find(p => p.x === position.x && p.z === position.z));
 
-          const letterEntity = document.createElement('a-entity');
-          letterEntity.setAttribute('class', 'letter');
-          letterEntity.setAttribute('id', `letter-${word.english[i]}`);
-          letterEntity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
-          letterEntity.innerHTML = `
-              <a-sphere radius="0.5" color="#4CC3D9"></a-sphere>
-              <a-text value="${word.english[i]}" align="center" color="#FFF" position="0 0.75 0" width="6"></a-text>
-          `;
-          letterGrid.appendChild(letterEntity);
-      }
+      positions.push(position);
 
-      addLetterSelection(); // Adicionar evento de seleção após criar as letras
+      const letterEntity = document.createElement('a-entity');
+      letterEntity.setAttribute('class', 'letter');
+      letterEntity.setAttribute('id', `letter-${word.english[i]}`);
+      letterEntity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+      // A letra fica sobre a superfície da esfera, grande, e gira para sempre ficar de frente para o jogador
+      letterEntity.innerHTML = `
+        <a-sphere radius="0.6" color="${COR_LETRA}"></a-sphere>
+        <a-entity face-camera>
+          <a-text value="${word.english[i]}" align="center" color="#06143a" width="20" position="0 0 0.9"></a-text>
+        </a-entity>
+      `;
+      letterGrid.appendChild(letterEntity);
+    }
+
+    addLetterSelection();
   }
 
-  // Função para carregar a próxima palavra
+  function finishGame(message) {
+    gameOver = true;
+    clearInterval(countdown);
+    showFeedback(message, 0);
+  }
+
   function loadWord() {
-      if (currentWordIndex >= words.length) {
-          alert(`Parabéns! Você completou o jogo com ${score} pontos.`);
-          clearInterval(countdown); // Parar o timer quando o jogo acabar
-          return;
-      }
+    if (currentWordIndex >= words.length) {
+      finishGame(`Parabens! Voce completou o jogo com ${score} pontos.`);
+      return;
+    }
 
-      initializeWord();
-      scoreElement.setAttribute('value', `Score: ${score}`);
-      timeLeft = 600; // Reiniciar o timer para cada palavra
-      timerElement.setAttribute('value', 'Time: ' + timeLeft);
+    initializeWord();
+    updateScoreDisplay();
+    timeLeft = TEMPO_POR_PALAVRA; // Reiniciar o timer para cada palavra
+    updateTimerDisplay();
   }
 
-  // Timer logic
   function startTimer() {
-      countdown = setInterval(function() {
-          if (timeLeft > 0) {
-              timeLeft--;
-              timerElement.setAttribute('value', 'Time: ' + timeLeft);
-          } else {
-              clearInterval(countdown);
-              alert('Tempo Esgotado!');
-              setTimeout(() => {
-                  alert(`Fim do jogo! Seu score final é ${score}`);
-              }, 1000);
-          }
-      }, 1000);
+    countdown = setInterval(function() {
+      if (timeLeft > 0) {
+        timeLeft--;
+        updateTimerDisplay();
+      } else {
+        finishGame(`Tempo esgotado! Pontuacao final: ${score}`);
+      }
+    }, 1000);
   }
 
   // Detectando qual letra está sendo selecionada
   function addLetterSelection() {
-      document.querySelectorAll('.letter').forEach(function(letter) {
-          letter.addEventListener('mouseenter', function () {
-              selectedLetter = letter.querySelector('a-text').getAttribute('value');
-              letter.querySelector('a-sphere').setAttribute('color', '#FFD700'); // Muda a cor quando selecionado
-          });
-          letter.addEventListener('mouseleave', function () {
-              selectedLetter = null;
-              letter.querySelector('a-sphere').setAttribute('color', '#4CC3D9'); // Volta à cor original
-          });
+    document.querySelectorAll('.letter').forEach(function(letter) {
+      letter.addEventListener('mouseenter', function () {
+        selectedLetter = letter.querySelector('a-text').getAttribute('value');
+        letter.querySelector('a-sphere').setAttribute('color', COR_LETRA_SELECIONADA);
       });
+      letter.addEventListener('mouseleave', function () {
+        selectedLetter = null;
+        letter.querySelector('a-sphere').setAttribute('color', COR_LETRA);
+      });
+    });
   }
 
-  // Lidar com a tecla espaço para confirmar a escolha
+  // Tecla espaço confirma a letra apontada pelo cursor
   document.addEventListener('keydown', function(event) {
-      if (event.code === 'Space' && selectedLetter) {
-          const word = words[currentWordIndex].english;
-          let correctGuess = false;
+    if (event.code !== 'Space' || !selectedLetter || !gameStarted || gameOver) return;
 
-          for (let i = 0; i < word.length; i++) {
-              if (word[i] === selectedLetter && guessedLetters[i] === "_") {
-                  guessedLetters[i] = selectedLetter;
-                  correctGuess = true;
-              }
-          }
+    const word = words[currentWordIndex].english;
+    let correctGuess = false;
 
-          hiddenWordElement.setAttribute('value', guessedLetters.join(" "));
-
-          if (correctGuess) {
-              score += 1; // Incrementar pontuação a cada letra correta
-              scoreElement.setAttribute('value', `Score: ${score}`);
-          }
-
-          if (guessedLetters.join("") === word) {
-              currentWordIndex++;
-              alert('Correto! Próxima palavra...');
-              setTimeout(() => {
-                  loadWord();
-              }, 1000);
-          }
-
-          addLetterSelection(); // Adicionar eventos de seleção após cada escolha
+    for (let i = 0; i < word.length; i++) {
+      if (word[i] === selectedLetter && guessedLetters[i] === "_") {
+        guessedLetters[i] = selectedLetter;
+        correctGuess = true;
       }
+    }
+
+    renderBoard();
+
+    if (correctGuess) {
+      // Remove do cenário todas as esferas com a letra acertada
+      document.querySelectorAll('.letter').forEach(function(el) {
+        if (el.querySelector('a-text').getAttribute('value') === selectedLetter) {
+          el.parentNode.removeChild(el);
+        }
+      });
+      selectedLetter = null;
+
+      score += 1; // Incrementar pontuação a cada letra correta
+      updateScoreDisplay();
+      showFeedback('Boa! Letra certa!', 1500);
+    } else {
+      showFeedback('Essa letra nao esta na palavra', 1500);
+    }
+
+    if (guessedLetters.join("") === word) {
+      currentWordIndex++;
+      showFeedback('Correto! Proxima palavra...', 0);
+      setTimeout(function() {
+        showFeedback('', 0);
+        loadWord();
+      }, 2000);
+    }
   });
 
-  // Função para iniciar o jogo
+  // Iniciar o jogo
   function startGame() {
-      if (!gameStarted) { // Garantir que o jogo só inicie uma vez
-          document.querySelector('#instruction-card').setAttribute('visible', 'false');
-          document.querySelector('#portuguese-word').setAttribute('visible', 'true');
-          document.querySelector('#hidden-word').setAttribute('visible', 'true');
-          document.querySelector('#letter-grid').setAttribute('visible', 'true');
+    if (gameStarted) return; 
+    document.querySelector('#instruction-card').setAttribute('visible', 'false');
+    document.querySelector('#word-board').setAttribute('visible', 'true');
+    document.querySelector('#letter-grid').setAttribute('visible', 'true');
 
-          loadWord();
-          startTimer();
-          gameStarted = true; // Marcar o jogo como iniciado
-      }
+    gameStarted = true;
+    loadWord();
+    startTimer();
+    showFeedback('Procure as esferas azuis na floresta', 6000);
   }
 
-  // Detectando a tecla Enter para iniciar o jogo
   document.addEventListener('keydown', function(event) {
-      if (event.code === 'Enter') {
-          startGame();
-      }
+    if (event.code === 'Enter') {
+      startGame();
+    }
   });
+
+  // Estado inicial do HUD
+  updateTimerDisplay();
+  updateScoreDisplay();
 </script>
 </body>
 </html>
