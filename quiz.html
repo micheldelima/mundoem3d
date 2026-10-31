@@ -29,10 +29,10 @@
     <a-entity id="instruction-card" position="0 1.6 -3">
       <a-plane color="#000" width="4" height="3" material="side: double">
         <a-text value="Bem-vindo ao Quiz do Mundo em 3D da UEPG!" position="0 1 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text id="instrucao-palavras" value="1. 30 segundos por palavra." position="0 0.4 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="2. Use o cursor vermelho para selecionar uma esfera e ENTER para confirmar a resposta." position="0 0 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="3. Use as setas do teclado ou as letras A D W S para se movimentar." position="0 -0.4 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="Pressione Enter para comecar" position="0 -1 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text id="instrucao-palavras" value="- 30 segundos por palavra." position="0 0.4 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="- Use o cursor vermelho para selecionar uma esfera e ENTER para confirmar a resposta." position="0 0 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="- Use as setas do teclado ou as letras A D W S para se movimentar." position="0 -0.4 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="Pressione Enter para iniciar" position="0 -1 0" align="center" color="#FFF" width="3.5"></a-text>
       </a-plane>
     </a-entity>
 
@@ -75,7 +75,8 @@
     <!-- Texto da pontuação (inicialmente escondido) -->
     <a-text id="score" value="Score: 0" color="#FFF" position="2 3 -3" width="6" visible="false"></a-text>
 
-  </a-scene>
+    <!-- Contador de palavras -->
+    <a-text id="word-count" value="Hits: 0 | Left: 0" color="#FFF" position="2 2.7 -3" width="4" visible="false"></a-text>  </a-scene>
 
 <script>
   // ---------- Lista de palavras ----------
@@ -252,12 +253,14 @@
   const feedbackElement = document.querySelector('#feedback');
   const targetWordElement = document.querySelector('#target-word');
   const scoreElement = document.querySelector('#score');
+  const wordCountElement = document.querySelector('#word-count'); 
+  let acertos = 0;
 
   // Mostra no cartão de instruções quantas palavras o quiz tem
   document.querySelector('#instrucao-palavras').setAttribute(
-    'value', `1. 30 segundos por palavra, ${words.length} palavras no total.`);
+    'value', `- Tente adivinhar a palavra correta traduzida, 30 segundos por palavra, ${words.length} palavras no total.`);
 
-  // Desenha o texto em português no canvas (aceita acentos e "ç", ao contrário da fonte padrão do A-Frame)
+  // Desenha o texto em português no canvas 
   function desenharPalavraPortugues(texto) {
     const canvas = document.querySelector('#canvas-portugues');
     const ctx = canvas.getContext('2d');
@@ -326,10 +329,14 @@
     currentWordIndex++;
     chances = 3;            // reinicia as chances para a próxima palavra
 
+     // Atualiza quantas palavras faltam (mesmo se tiver errado)
+    const faltam = words.length - currentWordIndex;
+    wordCountElement.setAttribute('value', `Hits: ${acertos} | Left: ${faltam}`);
+
     // Pequena espera para a tela atualizar o placar antes de o alerta travar a página
     setTimeout(function() {
       if (motivo === 'acerto') {
-        alert(`Correto! ${word.portuguese} = ${word.answer}\nPontos: ${score}`);
+        alert(`Correto! Ganhou 10 pontos!\n${word.portuguese} = ${word.answer}\nPontos: ${score}`);
       } else if (motivo === 'chances') {
         alert(`Fim das chances! ${word.portuguese} = ${word.answer}`);
       } else {
@@ -378,9 +385,15 @@
   document.addEventListener('keydown', function(event) {
     if (event.code === 'Space' && selectedOption && isGameActive && !aguardando) {
       if (selectedOption === respostaCorreta) {
-        // Acertou: soma ponto e mostra o alerta
-        score++;
+        // Acertou: soma 10 pontos e mostra o alerta
+        score += 10;  
         scoreElement.setAttribute('value', `Score: ${score}`);
+        
+        // incrementa os pontos
+        acertos++;
+        const faltam = words.length - acertos;
+        wordCountElement.setAttribute('value', `Hits: ${acertos} | Left: ${faltam}`);
+
         feedbackElement.setAttribute('value', 'Correto!');
         encerrarPalavra('acerto');
       } else {
@@ -408,6 +421,10 @@
     document.querySelector('#feedback').setAttribute('visible', 'true');
     document.querySelector('#timer').setAttribute('visible', 'true');
     document.querySelector('#score').setAttribute('visible', 'true');
+
+    // acertos/total
+    wordCountElement.setAttribute('visible', 'true');
+    wordCountElement.setAttribute('value', `Hits: 0 | Left: ${words.length}`);
 
     // Carrega a primeira palavra e inicia o cronômetro
     loadWord();

@@ -12,7 +12,13 @@
 </head>
 <body>
   <a-scene>
-    <!-- Câmera, cursor e HUD -->
+    <a-assets>
+      <canvas id="canvas-portugues" width="768" height="144"></canvas>      <!-- palavra a traduzir -->
+      <canvas id="canvas-feedback" width="1536" height="128"></canvas>      <!-- mensagens rápidas -->
+      <canvas id="canvas-instrucoes" width="1200" height="800"></canvas>    <!-- cartão de instruções -->
+    </a-assets>
+
+    <!-- Câmera, cursor e HUD (o HUD fica preso à câmera, sempre visível) -->
     <a-camera position="0 1.6 0">
       <a-cursor id="cursor" color="red"></a-cursor>
 
@@ -29,8 +35,10 @@
         <a-entity id="prompt-panel" position="0 1.68 0">
           <a-plane width="1.64" height="0.56" position="0 0 -0.002" material="shader: flat; color: #7fe3ff"></a-plane>
           <a-plane width="1.6" height="0.52" material="shader: flat; color: #071540; opacity: 0.92; transparent: true"></a-plane>
-          <a-text value="Traduza" color="#c4f1ff" align="center" width="2.6" position="0 0.16 0.01"></a-text>
-          <a-text id="portuguese-word" value="-" color="#ffffff" align="center" width="5.2" position="0 -0.07 0.01"></a-text>
+          <a-text id="prompt-label" value="Traduza" color="#c4f1ff" align="center" width="2.6" position="0 0.16 0.01"></a-text>
+          <!-- Palavra em português: plano com textura de canvas (aceita acentos e "ç") -->
+          <a-plane id="portuguese-word" width="1.5" height="0.28125" position="0 -0.07 0.01"
+                   material="shader: flat; src: #canvas-portugues; transparent: true"></a-plane>
         </a-entity>
 
         <a-entity position="1.72 1.68 0">
@@ -40,8 +48,9 @@
           <a-text id="score" value="0" color="#ffffff" align="center" width="5.2" position="0 -0.07 0.01"></a-text>
         </a-entity>
 
-        <!-- Mensagens rápidas (acertou, errou...) -->
-        <a-text id="feedback" value="" color="#ffd27a" align="center" width="4.2" position="0 -1.15 0.01"></a-text>
+        <!-- Mensagens rápidas (acertou, errou, fim de jogo...): também em canvas, para aceitar acentos -->
+        <a-plane id="feedback" width="4.2" height="0.35" position="0 -1.15 0.01"
+                 material="shader: flat; src: #canvas-feedback; transparent: true"></a-plane>
 
         <!-- Palavra a descobrir: uma casa para cada letra, com linha embaixo -->
         <a-entity id="word-board" position="0 -1.6 0" visible="false"></a-entity>
@@ -51,7 +60,7 @@
     <!-- Ambiente: floresta -->
     <a-entity environment="preset: forest; groundColor: #445; grid: cross"></a-entity>
 
-    <!-- Marcador de início: torre vermelha -->
+    <!-- Marcador de início: torre vermelha com topo dourado e placa sempre voltada para o jogador -->
     <a-entity id="start-marker" position="0 0 0">
       <a-cylinder position="0 15 0" height="30" radius="0.8" color="#e63946"></a-cylinder>
       <a-sphere position="0 30.6 0" radius="1.3" material="shader: flat; color: #ffb32c"></a-sphere>
@@ -63,14 +72,8 @@
     </a-entity>
 
     <!-- Cartão de instruções -->
-    <a-entity id="instruction-card" position="0 2 -3">
-      <a-plane color="#000" width="4" height="3" material="side: double">
-        <a-text value="Bem-vindo ao Caca ao Tesouro do Mundo em 3D da UEPG!" position="0 1 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="Voce tem 10 minutos para encontrar as letras certas espalhadas pela floresta." position="0 0.5 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="Use o cursor vermelho para selecionar as letras e aperte o espaco." position="0 0 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="Pressione Enter para comecar" position="0 -0.5 0" align="center" color="#FFF" width="3.5"></a-text>
-      </a-plane>
-    </a-entity>
+    <a-plane id="instruction-card" position="0 1.95 -3" width="3" height="2"
+             material="shader: flat; src: #canvas-instrucoes; transparent: true"></a-plane>
 
     <!-- Letras espalhadas em 3D (inicialmente escondidas) -->
     <a-entity id="letter-grid" visible="false"></a-entity>
@@ -88,39 +91,425 @@
     }
   });
 
-  const words = [
-    {portuguese: "Cachorro", english: "DOG"},
-    {portuguese: "Casa", english: "HOUSE"},
-    {portuguese: "Escola", english: "SCHOOL"},
-    {portuguese: "Carro", english: "CAR"},
-    {portuguese: "Livro", english: "BOOK"},
-    {portuguese: "Computador", english: "COMPUTER"},
-    {portuguese: "Telefone", english: "PHONE"},
-    {portuguese: "Papel", english: "PAPER"},
-    {portuguese: "Janela", english: "WINDOW"}
+  // ---------- Listas de palavras ----------
+  const TOTAL_PALAVRAS = 500;
+
+  // Lista base (234 palavras)
+  const palavrasBase = [
+    // Animais, natureza e coisas do dia a dia
+    {p: "Cachorro", e: "DOG"}, {p: "Gato", e: "CAT"}, {p: "Casa", e: "HOUSE"}, {p: "Escola", e: "SCHOOL"},
+    {p: "Carro", e: "CAR"}, {p: "Livro", e: "BOOK"}, {p: "Computador", e: "COMPUTER"}, {p: "Telefone", e: "PHONE"},
+    {p: "Papel", e: "PAPER"}, {p: "Janela", e: "WINDOW"}, {p: "Água", e: "WATER"}, {p: "Fogo", e: "FIRE"},
+    {p: "Terra", e: "EARTH"}, {p: "Ar", e: "AIR"}, {p: "Sol", e: "SUN"}, {p: "Lua", e: "MOON"},
+    {p: "Estrela", e: "STAR"}, {p: "Céu", e: "SKY"}, {p: "Mar", e: "SEA"}, {p: "Rio", e: "RIVER"},
+    {p: "Montanha", e: "MOUNTAIN"}, {p: "Árvore", e: "TREE"}, {p: "Flor", e: "FLOWER"}, {p: "Fruta", e: "FRUIT"},
+    {p: "Maçã", e: "APPLE"}, {p: "Banana", e: "BANANA"}, {p: "Uva", e: "GRAPE"}, {p: "Leite", e: "MILK"},
+    {p: "Pão", e: "BREAD"}, {p: "Queijo", e: "CHEESE"}, {p: "Carne", e: "MEAT"}, {p: "Peixe", e: "FISH"},
+    {p: "Pássaro", e: "BIRD"}, {p: "Cavalo", e: "HORSE"}, {p: "Vaca", e: "COW"}, {p: "Porco", e: "PIG"},
+    {p: "Ovelha", e: "SHEEP"}, {p: "Leão", e: "LION"}, {p: "Tigre", e: "TIGER"}, {p: "Urso", e: "BEAR"},
+    {p: "Lobo", e: "WOLF"}, {p: "Rato", e: "MOUSE"}, {p: "Galinha", e: "CHICKEN"}, {p: "Pato", e: "DUCK"},
+    {p: "Macaco", e: "MONKEY"}, {p: "Elefante", e: "ELEPHANT"}, {p: "Cobra", e: "SNAKE"}, {p: "Sapo", e: "FROG"},
+    {p: "Abelha", e: "BEE"}, {p: "Borboleta", e: "BUTTERFLY"}, {p: "Formiga", e: "ANT"},
+
+    // Pessoas e corpo
+    {p: "Homem", e: "MAN"}, {p: "Mulher", e: "WOMAN"}, {p: "Menino", e: "BOY"}, {p: "Menina", e: "GIRL"},
+    {p: "Amigo", e: "FRIEND"}, {p: "Família", e: "FAMILY"}, {p: "Mãe", e: "MOTHER"}, {p: "Pai", e: "FATHER"},
+    {p: "Irmão", e: "BROTHER"}, {p: "Irmã", e: "SISTER"}, {p: "Cabeça", e: "HEAD"}, {p: "Mão", e: "HAND"},
+    {p: "Pé", e: "FOOT"}, {p: "Olho", e: "EYE"}, {p: "Ouvido", e: "EAR"}, {p: "Boca", e: "MOUTH"},
+    {p: "Nariz", e: "NOSE"}, {p: "Cabelo", e: "HAIR"}, {p: "Dente", e: "TOOTH"}, {p: "Dedo", e: "FINGER"},
+
+    // Roupas e cores
+    {p: "Roupa", e: "CLOTHES"}, {p: "Sapato", e: "SHOE"}, {p: "Chapéu", e: "HAT"}, {p: "Camisa", e: "SHIRT"},
+    {p: "Calça", e: "PANTS"}, {p: "Vestido", e: "DRESS"}, {p: "Meia", e: "SOCK"}, {p: "Casaco", e: "COAT"},
+    {p: "Vermelho", e: "RED"}, {p: "Azul", e: "BLUE"}, {p: "Verde", e: "GREEN"}, {p: "Amarelo", e: "YELLOW"},
+    {p: "Preto", e: "BLACK"}, {p: "Branco", e: "WHITE"}, {p: "Cinza", e: "GRAY"}, {p: "Rosa", e: "PINK"},
+    {p: "Roxo", e: "PURPLE"}, {p: "Laranja", e: "ORANGE"}, {p: "Marrom", e: "BROWN"},
+
+    // Números e tempo
+    {p: "Um", e: "ONE"}, {p: "Dois", e: "TWO"}, {p: "Três", e: "THREE"}, {p: "Quatro", e: "FOUR"},
+    {p: "Cinco", e: "FIVE"}, {p: "Seis", e: "SIX"}, {p: "Sete", e: "SEVEN"}, {p: "Oito", e: "EIGHT"},
+    {p: "Nove", e: "NINE"}, {p: "Dez", e: "TEN"}, {p: "Cem", e: "HUNDRED"}, {p: "Mil", e: "THOUSAND"},
+    {p: "Segunda", e: "MONDAY"}, {p: "Terça", e: "TUESDAY"}, {p: "Quarta", e: "WEDNESDAY"}, {p: "Quinta", e: "THURSDAY"},
+    {p: "Sexta", e: "FRIDAY"}, {p: "Sábado", e: "SATURDAY"}, {p: "Domingo", e: "SUNDAY"}, {p: "Janeiro", e: "JANUARY"},
+    {p: "Fevereiro", e: "FEBRUARY"}, {p: "Março", e: "MARCH"}, {p: "Abril", e: "APRIL"}, {p: "Maio", e: "MAY"},
+    {p: "Junho", e: "JUNE"}, {p: "Julho", e: "JULY"}, {p: "Agosto", e: "AUGUST"}, {p: "Setembro", e: "SEPTEMBER"},
+    {p: "Outubro", e: "OCTOBER"}, {p: "Novembro", e: "NOVEMBER"}, {p: "Dezembro", e: "DECEMBER"}, {p: "Primavera", e: "SPRING"},
+    {p: "Verão", e: "SUMMER"}, {p: "Outono", e: "AUTUMN"}, {p: "Inverno", e: "WINTER"}, {p: "Dia", e: "DAY"},
+    {p: "Noite", e: "NIGHT"}, {p: "Manhã", e: "MORNING"}, {p: "Tarde", e: "AFTERNOON"}, {p: "Ano", e: "YEAR"},
+    {p: "Mês", e: "MONTH"}, {p: "Semana", e: "WEEK"}, {p: "Hora", e: "HOUR"}, {p: "Minuto", e: "MINUTE"},
+
+    // Lugares e objetos
+    {p: "Trabalho", e: "WORK"}, {p: "Jogo", e: "GAME"}, {p: "Música", e: "MUSIC"}, {p: "Filme", e: "MOVIE"},
+    {p: "Cidade", e: "CITY"}, {p: "Rua", e: "STREET"}, {p: "Praia", e: "BEACH"}, {p: "Parque", e: "PARK"},
+    {p: "Loja", e: "STORE"}, {p: "Dinheiro", e: "MONEY"}, {p: "Relógio", e: "CLOCK"}, {p: "Chave", e: "KEY"},
+    {p: "Porta", e: "DOOR"}, {p: "Mesa", e: "TABLE"}, {p: "Cadeira", e: "CHAIR"}, {p: "Cama", e: "BED"},
+    {p: "Sala", e: "ROOM"}, {p: "Cozinha", e: "KITCHEN"}, {p: "Banheiro", e: "BATHROOM"}, {p: "Jardim", e: "GARDEN"},
+    {p: "Hospital", e: "HOSPITAL"}, {p: "Restaurante", e: "RESTAURANT"}, {p: "Hotel", e: "HOTEL"}, {p: "Banco", e: "BANK"},
+    {p: "Espelho", e: "MIRROR"}, {p: "Toalha", e: "TOWEL"}, {p: "Sabão", e: "SOAP"}, {p: "Escova", e: "BRUSH"},
+    {p: "Prato", e: "PLATE"}, {p: "Copo", e: "GLASS"}, {p: "Garfo", e: "FORK"}, {p: "Faca", e: "KNIFE"},
+    {p: "Colher", e: "SPOON"}, {p: "Panela", e: "PAN"}, {p: "Lâmpada", e: "LAMP"},
+
+    // Transportes e profissões
+    {p: "Ônibus", e: "BUS"}, {p: "Trem", e: "TRAIN"}, {p: "Avião", e: "AIRPLANE"}, {p: "Bicicleta", e: "BICYCLE"},
+    {p: "Navio", e: "SHIP"}, {p: "Moto", e: "MOTORCYCLE"}, {p: "Caminhão", e: "TRUCK"}, {p: "Barco", e: "BOAT"},
+    {p: "Médico", e: "DOCTOR"}, {p: "Professor", e: "TEACHER"}, {p: "Estudante", e: "STUDENT"}, {p: "Policial", e: "POLICE"},
+    {p: "Bombeiro", e: "FIREFIGHTER"}, {p: "Cantor", e: "SINGER"}, {p: "Dentista", e: "DENTIST"}, {p: "Advogado", e: "LAWYER"},
+    {p: "Engenheiro", e: "ENGINEER"}, {p: "Cozinheiro", e: "COOK"}, {p: "Garçom", e: "WAITER"}, {p: "Ator", e: "ACTOR"},
+
+    // Ações, esportes e adjetivos
+    {p: "Dança", e: "DANCE"}, {p: "Esporte", e: "SPORT"}, {p: "Futebol", e: "FOOTBALL"}, {p: "Basquete", e: "BASKETBALL"},
+    {p: "Natação", e: "SWIMMING"}, {p: "Corrida", e: "RUNNING"}, {p: "Vôlei", e: "VOLLEYBALL"}, {p: "Tênis", e: "TENNIS"},
+    {p: "Comer", e: "EAT"}, {p: "Beber", e: "DRINK"}, {p: "Dormir", e: "SLEEP"}, {p: "Correr", e: "RUN"},
+    {p: "Andar", e: "WALK"}, {p: "Falar", e: "SPEAK"}, {p: "Ouvir", e: "LISTEN"}, {p: "Ler", e: "READ"},
+    {p: "Escrever", e: "WRITE"}, {p: "Pensar", e: "THINK"}, {p: "Amar", e: "LOVE"}, {p: "Rir", e: "LAUGH"},
+    {p: "Chorar", e: "CRY"}, {p: "Grande", e: "BIG"}, {p: "Pequeno", e: "SMALL"}, {p: "Alto", e: "TALL"},
+    {p: "Baixo", e: "SHORT"}, {p: "Rápido", e: "FAST"}, {p: "Devagar", e: "SLOW"}, {p: "Quente", e: "HOT"},
+    {p: "Frio", e: "COLD"}, {p: "Feliz", e: "HAPPY"}, {p: "Triste", e: "SAD"}, {p: "Novo", e: "NEW"},
+    {p: "Velho", e: "OLD"}, {p: "Bonito", e: "BEAUTIFUL"}, {p: "Feio", e: "UGLY"}, {p: "Fácil", e: "EASY"},
+    {p: "Difícil", e: "HARD"}, {p: "Caro", e: "EXPENSIVE"}, {p: "Barato", e: "CHEAP"}, {p: "Limpo", e: "CLEAN"},
+    {p: "Sujo", e: "DIRTY"}, {p: "Forte", e: "STRONG"}, {p: "Fraco", e: "WEAK"}, {p: "Cheio", e: "FULL"},
+    {p: "Vazio", e: "EMPTY"}
   ];
 
-  const TEMPO_POR_PALAVRA = 600; // 10 minutos
+  // 500 palavras novas
+  const palavrasNovas = [
+    // Mais animais
+    {p: "Aranha", e: "SPIDER"}, {p: "Baleia", e: "WHALE"}, {p: "Tubarão", e: "SHARK"}, {p: "Golfinho", e: "DOLPHIN"},
+    {p: "Coruja", e: "OWL"}, {p: "Águia", e: "EAGLE"}, {p: "Pombo", e: "PIGEON"}, {p: "Papagaio", e: "PARROT"},
+    {p: "Pinguim", e: "PENGUIN"}, {p: "Coelho", e: "RABBIT"}, {p: "Cervo", e: "DEER"}, {p: "Raposa", e: "FOX"},
+    {p: "Esquilo", e: "SQUIRREL"}, {p: "Girafa", e: "GIRAFFE"}, {p: "Zebra", e: "ZEBRA"}, {p: "Camelo", e: "CAMEL"},
+    {p: "Canguru", e: "KANGAROO"}, {p: "Panda", e: "PANDA"}, {p: "Gorila", e: "GORILLA"}, {p: "Hipopótamo", e: "HIPPOPOTAMUS"},
+    {p: "Rinoceronte", e: "RHINOCEROS"}, {p: "Crocodilo", e: "CROCODILE"}, {p: "Jacaré", e: "ALLIGATOR"}, {p: "Tartaruga", e: "TURTLE"},
+    {p: "Lagarto", e: "LIZARD"}, {p: "Caracol", e: "SNAIL"}, {p: "Minhoca", e: "WORM"}, {p: "Mosca", e: "FLY"},
+    {p: "Mosquito", e: "MOSQUITO"}, {p: "Joaninha", e: "LADYBUG"}, {p: "Gafanhoto", e: "GRASSHOPPER"}, {p: "Polvo", e: "OCTOPUS"},
+    {p: "Caranguejo", e: "CRAB"}, {p: "Lagosta", e: "LOBSTER"}, {p: "Foca", e: "SEAL"}, {p: "Morcego", e: "BAT"},
+    {p: "Burro", e: "DONKEY"}, {p: "Cabra", e: "GOAT"}, {p: "Peru", e: "TURKEY"}, {p: "Cisne", e: "SWAN"},
+
+    // Comida e bebida
+    {p: "Pera", e: "PEAR"}, {p: "Pêssego", e: "PEACH"}, {p: "Morango", e: "STRAWBERRY"}, {p: "Melancia", e: "WATERMELON"},
+    {p: "Abacaxi", e: "PINEAPPLE"}, {p: "Limão", e: "LEMON"}, {p: "Manga", e: "MANGO"}, {p: "Cereja", e: "CHERRY"},
+    {p: "Coco", e: "COCONUT"}, {p: "Mamão", e: "PAPAYA"}, {p: "Tomate", e: "TOMATO"}, {p: "Batata", e: "POTATO"},
+    {p: "Cenoura", e: "CARROT"}, {p: "Cebola", e: "ONION"}, {p: "Alho", e: "GARLIC"}, {p: "Alface", e: "LETTUCE"},
+    {p: "Milho", e: "CORN"}, {p: "Feijão", e: "BEANS"}, {p: "Ervilha", e: "PEAS"}, {p: "Pepino", e: "CUCUMBER"},
+    {p: "Brócolis", e: "BROCCOLI"}, {p: "Abóbora", e: "PUMPKIN"}, {p: "Cogumelo", e: "MUSHROOM"}, {p: "Arroz", e: "RICE"},
+    {p: "Macarrão", e: "PASTA"}, {p: "Sopa", e: "SOUP"}, {p: "Salada", e: "SALAD"}, {p: "Sanduíche", e: "SANDWICH"},
+    {p: "Hambúrguer", e: "HAMBURGER"}, {p: "Pizza", e: "PIZZA"}, {p: "Ovo", e: "EGG"}, {p: "Manteiga", e: "BUTTER"},
+    {p: "Iogurte", e: "YOGURT"}, {p: "Bolo", e: "CAKE"}, {p: "Biscoito", e: "COOKIE"}, {p: "Chocolate", e: "CHOCOLATE"},
+    {p: "Bala", e: "CANDY"}, {p: "Açúcar", e: "SUGAR"}, {p: "Sal", e: "SALT"}, {p: "Pimenta", e: "PEPPER"},
+
+    // Natureza e clima
+    {p: "Chuva", e: "RAIN"}, {p: "Neve", e: "SNOW"}, {p: "Vento", e: "WIND"}, {p: "Nuvem", e: "CLOUD"},
+    {p: "Tempestade", e: "STORM"}, {p: "Trovão", e: "THUNDER"}, {p: "Raio", e: "LIGHTNING"}, {p: "Arco-íris", e: "RAINBOW"},
+    {p: "Neblina", e: "FOG"}, {p: "Gelo", e: "ICE"}, {p: "Calor", e: "HEAT"}, {p: "Clima", e: "WEATHER"},
+    {p: "Lago", e: "LAKE"}, {p: "Oceano", e: "OCEAN"}, {p: "Ilha", e: "ISLAND"}, {p: "Deserto", e: "DESERT"},
+    {p: "Vulcão", e: "VOLCANO"}, {p: "Caverna", e: "CAVE"}, {p: "Colina", e: "HILL"}, {p: "Vale", e: "VALLEY"},
+    {p: "Floresta", e: "FOREST"}, {p: "Selva", e: "JUNGLE"}, {p: "Campo", e: "FIELD"}, {p: "Grama", e: "GRASS"},
+    {p: "Folha", e: "LEAF"}, {p: "Raiz", e: "ROOT"}, {p: "Galho", e: "BRANCH"}, {p: "Semente", e: "SEED"},
+    {p: "Pedra", e: "STONE"}, {p: "Areia", e: "SAND"}, {p: "Lama", e: "MUD"}, {p: "Poeira", e: "DUST"},
+    {p: "Onda", e: "WAVE"}, {p: "Cachoeira", e: "WATERFALL"}, {p: "Pântano", e: "SWAMP"}, {p: "Planeta", e: "PLANET"},
+    {p: "Cometa", e: "COMET"}, {p: "Galáxia", e: "GALAXY"}, {p: "Universo", e: "UNIVERSE"}, {p: "Sombra", e: "SHADOW"},
+    {p: "Luz", e: "LIGHT"},
+
+    // Corpo e saúde
+    {p: "Corpo", e: "BODY"}, {p: "Rosto", e: "FACE"}, {p: "Pescoço", e: "NECK"}, {p: "Ombro", e: "SHOULDER"},
+    {p: "Braço", e: "ARM"}, {p: "Cotovelo", e: "ELBOW"}, {p: "Pulso", e: "WRIST"}, {p: "Perna", e: "LEG"},
+    {p: "Joelho", e: "KNEE"}, {p: "Tornozelo", e: "ANKLE"}, {p: "Unha", e: "NAIL"}, {p: "Pele", e: "SKIN"},
+    {p: "Osso", e: "BONE"}, {p: "Músculo", e: "MUSCLE"}, {p: "Coração", e: "HEART"}, {p: "Pulmão", e: "LUNG"},
+    {p: "Cérebro", e: "BRAIN"}, {p: "Estômago", e: "STOMACH"}, {p: "Sangue", e: "BLOOD"}, {p: "Barriga", e: "BELLY"},
+    {p: "Costas", e: "BACK"}, {p: "Peito", e: "CHEST"}, {p: "Lábio", e: "LIP"}, {p: "Língua", e: "TONGUE"},
+    {p: "Bochecha", e: "CHEEK"}, {p: "Sobrancelha", e: "EYEBROW"}, {p: "Queixo", e: "CHIN"}, {p: "Testa", e: "FOREHEAD"},
+    {p: "Barba", e: "BEARD"}, {p: "Saúde", e: "HEALTH"}, {p: "Remédio", e: "MEDICINE"}, {p: "Febre", e: "FEVER"},
+    {p: "Dor", e: "PAIN"}, {p: "Tosse", e: "COUGH"}, {p: "Gripe", e: "FLU"},
+
+    // Casa e objetos
+    {p: "Telhado", e: "ROOF"}, {p: "Parede", e: "WALL"}, {p: "Chão", e: "FLOOR"}, {p: "Teto", e: "CEILING"},
+    {p: "Escada", e: "STAIRS"}, {p: "Sofá", e: "SOFA"}, {p: "Armário", e: "CLOSET"}, {p: "Gaveta", e: "DRAWER"},
+    {p: "Estante", e: "SHELF"}, {p: "Tapete", e: "CARPET"}, {p: "Cortina", e: "CURTAIN"}, {p: "Travesseiro", e: "PILLOW"},
+    {p: "Cobertor", e: "BLANKET"}, {p: "Lençol", e: "SHEET"}, {p: "Vassoura", e: "BROOM"}, {p: "Balde", e: "BUCKET"},
+    {p: "Lixo", e: "TRASH"}, {p: "Caixa", e: "BOX"}, {p: "Sacola", e: "BAG"}, {p: "Mala", e: "SUITCASE"},
+    {p: "Mochila", e: "BACKPACK"}, {p: "Carteira", e: "WALLET"}, {p: "Guarda-chuva", e: "UMBRELLA"}, {p: "Óculos", e: "GLASSES"},
+    {p: "Anel", e: "RING"}, {p: "Colar", e: "NECKLACE"}, {p: "Pulseira", e: "BRACELET"}, {p: "Pente", e: "COMB"},
+    {p: "Tesoura", e: "SCISSORS"}, {p: "Cola", e: "GLUE"}, {p: "Lápis", e: "PENCIL"}, {p: "Caneta", e: "PEN"},
+    {p: "Borracha", e: "ERASER"}, {p: "Régua", e: "RULER"}, {p: "Caderno", e: "NOTEBOOK"}, {p: "Mapa", e: "MAP"},
+    {p: "Envelope", e: "ENVELOPE"}, {p: "Foto", e: "PHOTO"}, {p: "Tinta", e: "PAINT"}, {p: "Martelo", e: "HAMMER"},
+    {p: "Parafuso", e: "SCREW"},
+
+    // Roupas
+    {p: "Jaqueta", e: "JACKET"}, {p: "Suéter", e: "SWEATER"}, {p: "Saia", e: "SKIRT"}, {p: "Short", e: "SHORTS"},
+    {p: "Luva", e: "GLOVE"}, {p: "Cachecol", e: "SCARF"}, {p: "Boné", e: "CAP"}, {p: "Botas", e: "BOOTS"},
+    {p: "Chinelo", e: "SLIPPER"}, {p: "Cinto", e: "BELT"}, {p: "Gravata", e: "TIE"}, {p: "Pijama", e: "PAJAMAS"},
+    {p: "Uniforme", e: "UNIFORM"}, {p: "Fantasia", e: "COSTUME"}, {p: "Bolso", e: "POCKET"}, {p: "Botão", e: "BUTTON"},
+    {p: "Zíper", e: "ZIPPER"}, {p: "Fralda", e: "DIAPER"},
+
+    // Lugares
+    {p: "Igreja", e: "CHURCH"}, {p: "Biblioteca", e: "LIBRARY"}, {p: "Museu", e: "MUSEUM"}, {p: "Cinema", e: "CINEMA"},
+    {p: "Estádio", e: "STADIUM"}, {p: "Aeroporto", e: "AIRPORT"}, {p: "Estação", e: "STATION"}, {p: "Ponte", e: "BRIDGE"},
+    {p: "Estrada", e: "ROAD"}, {p: "Rodovia", e: "HIGHWAY"}, {p: "Esquina", e: "CORNER"}, {p: "Praça", e: "PLAZA"},
+    {p: "Mercado", e: "MARKET"}, {p: "Supermercado", e: "SUPERMARKET"}, {p: "Farmácia", e: "PHARMACY"}, {p: "Padaria", e: "BAKERY"},
+    {p: "Fábrica", e: "FACTORY"}, {p: "Fazenda", e: "FARM"}, {p: "Castelo", e: "CASTLE"}, {p: "Prédio", e: "BUILDING"},
+    {p: "Torre", e: "TOWER"}, {p: "Túnel", e: "TUNNEL"}, {p: "Vila", e: "VILLAGE"}, {p: "País", e: "COUNTRY"},
+    {p: "Mundo", e: "WORLD"}, {p: "Escritório", e: "OFFICE"}, {p: "Universidade", e: "UNIVERSITY"}, {p: "Piscina", e: "POOL"},
+    {p: "Zoológico", e: "ZOO"}, {p: "Circo", e: "CIRCUS"}, {p: "Acampamento", e: "CAMP"}, {p: "Porto", e: "PORT"},
+
+    // Profissões e pessoas
+    {p: "Fazendeiro", e: "FARMER"}, {p: "Pescador", e: "FISHERMAN"}, {p: "Piloto", e: "PILOT"}, {p: "Motorista", e: "DRIVER"},
+    {p: "Pintor", e: "PAINTER"}, {p: "Escritor", e: "WRITER"}, {p: "Artista", e: "ARTIST"}, {p: "Cientista", e: "SCIENTIST"},
+    {p: "Enfermeiro", e: "NURSE"}, {p: "Padeiro", e: "BAKER"}, {p: "Carteiro", e: "POSTMAN"}, {p: "Soldado", e: "SOLDIER"},
+    {p: "Rei", e: "KING"}, {p: "Rainha", e: "QUEEN"}, {p: "Príncipe", e: "PRINCE"}, {p: "Princesa", e: "PRINCESS"},
+    {p: "Bruxa", e: "WITCH"}, {p: "Gigante", e: "GIANT"}, {p: "Fantasma", e: "GHOST"}, {p: "Pirata", e: "PIRATE"},
+    {p: "Palhaço", e: "CLOWN"}, {p: "Mago", e: "WIZARD"}, {p: "Herói", e: "HERO"}, {p: "Vizinho", e: "NEIGHBOR"},
+    {p: "Criança", e: "CHILD"}, {p: "Bebê", e: "BABY"}, {p: "Adulto", e: "ADULT"}, {p: "Avô", e: "GRANDFATHER"},
+    {p: "Avó", e: "GRANDMOTHER"}, {p: "Tio", e: "UNCLE"}, {p: "Tia", e: "AUNT"}, {p: "Primo", e: "COUSIN"},
+    {p: "Marido", e: "HUSBAND"}, {p: "Esposa", e: "WIFE"}, {p: "Filho", e: "SON"}, {p: "Filha", e: "DAUGHTER"},
+    {p: "Pessoa", e: "PERSON"}, {p: "Convidado", e: "GUEST"}, {p: "Chefe", e: "BOSS"}, {p: "Time", e: "TEAM"},
+    {p: "Jogador", e: "PLAYER"},
+
+    // Transportes
+    {p: "Helicóptero", e: "HELICOPTER"}, {p: "Foguete", e: "ROCKET"}, {p: "Submarino", e: "SUBMARINE"}, {p: "Metrô", e: "SUBWAY"},
+    {p: "Táxi", e: "TAXI"}, {p: "Ambulância", e: "AMBULANCE"}, {p: "Trator", e: "TRACTOR"}, {p: "Patinete", e: "SCOOTER"},
+    {p: "Skate", e: "SKATEBOARD"}, {p: "Balão", e: "BALLOON"}, {p: "Canoa", e: "CANOE"}, {p: "Jangada", e: "RAFT"},
+    {p: "Âncora", e: "ANCHOR"}, {p: "Velocidade", e: "SPEED"}, {p: "Viagem", e: "TRIP"}, {p: "Passageiro", e: "PASSENGER"},
+    {p: "Bilhete", e: "TICKET"},
+
+    // Escola e tecnologia
+    {p: "Lição", e: "LESSON"}, {p: "Aula", e: "CLASS"}, {p: "Prova", e: "EXAM"}, {p: "Lousa", e: "BLACKBOARD"},
+    {p: "Dever", e: "HOMEWORK"}, {p: "Palavra", e: "WORD"}, {p: "Frase", e: "SENTENCE"}, {p: "Letra", e: "LETTER"},
+    {p: "Número", e: "NUMBER"}, {p: "Pergunta", e: "QUESTION"}, {p: "Resposta", e: "ANSWER"}, {p: "História", e: "STORY"},
+    {p: "Poema", e: "POEM"}, {p: "Ciência", e: "SCIENCE"}, {p: "Matemática", e: "MATH"}, {p: "Arte", e: "ART"},
+    {p: "Idioma", e: "LANGUAGE"}, {p: "Internet", e: "INTERNET"}, {p: "Rede", e: "NETWORK"}, {p: "Senha", e: "PASSWORD"},
+    {p: "Arquivo", e: "FILE"}, {p: "Pasta", e: "FOLDER"}, {p: "Tela", e: "SCREEN"}, {p: "Programa", e: "PROGRAM"},
+    {p: "Robô", e: "ROBOT"}, {p: "Mensagem", e: "MESSAGE"}, {p: "Vídeo", e: "VIDEO"}, {p: "Fone", e: "HEADPHONES"},
+
+    // Lazer e esportes
+    {p: "Gol", e: "GOAL"}, {p: "Medalha", e: "MEDAL"}, {p: "Troféu", e: "TROPHY"}, {p: "Campeão", e: "CHAMPION"},
+    {p: "Raquete", e: "RACKET"}, {p: "Pipa", e: "KITE"}, {p: "Boneca", e: "DOLL"}, {p: "Brinquedo", e: "TOY"},
+    {p: "Quebra-cabeça", e: "PUZZLE"}, {p: "Cartas", e: "CARDS"}, {p: "Dado", e: "DICE"}, {p: "Festa", e: "PARTY"},
+    {p: "Presente", e: "GIFT"}, {p: "Aniversário", e: "BIRTHDAY"}, {p: "Natal", e: "CHRISTMAS"}, {p: "Desenho", e: "DRAWING"},
+    {p: "Piquenique", e: "PICNIC"}, {p: "Aventura", e: "ADVENTURE"}, {p: "Tesouro", e: "TREASURE"}, {p: "Bandeira", e: "FLAG"},
+    {p: "Segredo", e: "SECRET"}, {p: "Sonho", e: "DREAM"}, {p: "Magia", e: "MAGIC"}, {p: "Surpresa", e: "SURPRISE"},
+    {p: "Sorriso", e: "SMILE"}, {p: "Abraço", e: "HUG"}, {p: "Beijo", e: "KISS"},
+
+    // Verbos
+    {p: "Pular", e: "JUMP"}, {p: "Nadar", e: "SWIM"}, {p: "Cantar", e: "SING"}, {p: "Brincar", e: "PLAY"},
+    {p: "Estudar", e: "STUDY"}, {p: "Aprender", e: "LEARN"}, {p: "Ensinar", e: "TEACH"}, {p: "Abrir", e: "OPEN"},
+    {p: "Fechar", e: "CLOSE"}, {p: "Comprar", e: "BUY"}, {p: "Vender", e: "SELL"}, {p: "Pagar", e: "PAY"},
+    {p: "Lavar", e: "WASH"}, {p: "Desenhar", e: "DRAW"}, {p: "Cortar", e: "CUT"}, {p: "Arremessar", e: "THROW"},
+    {p: "Pegar", e: "CATCH"}, {p: "Empurrar", e: "PUSH"}, {p: "Puxar", e: "PULL"}, {p: "Subir", e: "CLIMB"},
+    {p: "Cair", e: "FALL"}, {p: "Sentar", e: "SIT"}, {p: "Chegar", e: "ARRIVE"}, {p: "Sair", e: "LEAVE"},
+    {p: "Ficar", e: "STAY"}, {p: "Voltar", e: "RETURN"}, {p: "Esperar", e: "WAIT"}, {p: "Procurar", e: "SEARCH"},
+    {p: "Encontrar", e: "FIND"}, {p: "Perder", e: "LOSE"}, {p: "Ganhar", e: "WIN"}, {p: "Escolher", e: "CHOOSE"},
+    {p: "Ajudar", e: "HELP"}, {p: "Dar", e: "GIVE"}, {p: "Receber", e: "RECEIVE"}, {p: "Mostrar", e: "SHOW"},
+    {p: "Olhar", e: "LOOK"}, {p: "Ver", e: "SEE"}, {p: "Tocar", e: "TOUCH"}, {p: "Sentir", e: "FEEL"},
+    {p: "Cheirar", e: "SMELL"},
+
+    // Adjetivos e formas
+    {p: "Gordo", e: "FAT"}, {p: "Magro", e: "THIN"}, {p: "Largo", e: "WIDE"}, {p: "Estreito", e: "NARROW"},
+    {p: "Profundo", e: "DEEP"}, {p: "Raso", e: "SHALLOW"}, {p: "Longo", e: "LONG"}, {p: "Pesado", e: "HEAVY"},
+    {p: "Macio", e: "SOFT"}, {p: "Liso", e: "SMOOTH"}, {p: "Áspero", e: "ROUGH"}, {p: "Molhado", e: "WET"},
+    {p: "Seco", e: "DRY"}, {p: "Perto", e: "NEAR"}, {p: "Longe", e: "FAR"}, {p: "Cedo", e: "EARLY"},
+    {p: "Rico", e: "RICH"}, {p: "Pobre", e: "POOR"}, {p: "Corajoso", e: "BRAVE"}, {p: "Esperto", e: "SMART"},
+    {p: "Gentil", e: "KIND"}, {p: "Engraçado", e: "FUNNY"}, {p: "Sério", e: "SERIOUS"}, {p: "Calmo", e: "CALM"},
+    {p: "Barulhento", e: "NOISY"}, {p: "Silencioso", e: "QUIET"}, {p: "Doce", e: "SWEET"}, {p: "Amargo", e: "BITTER"},
+    {p: "Azedo", e: "SOUR"}, {p: "Salgado", e: "SALTY"}, {p: "Gostoso", e: "DELICIOUS"}, {p: "Fresco", e: "FRESH"},
+    {p: "Podre", e: "ROTTEN"}, {p: "Maduro", e: "RIPE"}, {p: "Cru", e: "RAW"}, {p: "Morno", e: "WARM"},
+    {p: "Brilhante", e: "BRIGHT"}, {p: "Escuro", e: "DARK"}, {p: "Redondo", e: "ROUND"}, {p: "Quadrado", e: "SQUARE"},
+    {p: "Triângulo", e: "TRIANGLE"},
+
+    // Ideias e tempo
+    {p: "Paz", e: "PEACE"}, {p: "Guerra", e: "WAR"}, {p: "Medo", e: "FEAR"}, {p: "Alegria", e: "JOY"},
+    {p: "Sorte", e: "LUCK"}, {p: "Verdade", e: "TRUTH"}, {p: "Mentira", e: "LIE"}, {p: "Ideia", e: "IDEA"},
+    {p: "Vida", e: "LIFE"}, {p: "Espaço", e: "SPACE"}, {p: "Coragem", e: "COURAGE"}, {p: "Amizade", e: "FRIENDSHIP"},
+    {p: "Liberdade", e: "FREEDOM"}, {p: "Justiça", e: "JUSTICE"}, {p: "Sabedoria", e: "WISDOM"}, {p: "Esperança", e: "HOPE"},
+    {p: "Memória", e: "MEMORY"}, {p: "Futuro", e: "FUTURE"}, {p: "Passado", e: "PAST"}, {p: "Ontem", e: "YESTERDAY"},
+    {p: "Hoje", e: "TODAY"}, {p: "Amanhã", e: "TOMORROW"}, {p: "Sempre", e: "ALWAYS"}, {p: "Nunca", e: "NEVER"},
+    {p: "Agora", e: "NOW"}, {p: "Aqui", e: "HERE"}, {p: "Lá", e: "THERE"}, {p: "Dentro", e: "INSIDE"},
+    {p: "Fora", e: "OUTSIDE"}, {p: "Acima", e: "ABOVE"}, {p: "Abaixo", e: "BELOW"}, {p: "Entre", e: "BETWEEN"},
+
+    // Música e materiais
+    {p: "Violão", e: "GUITAR"}, {p: "Piano", e: "PIANO"}, {p: "Tambor", e: "DRUM"}, {p: "Flauta", e: "FLUTE"},
+    {p: "Violino", e: "VIOLIN"}, {p: "Canção", e: "SONG"}, {p: "Banda", e: "BAND"}, {p: "Som", e: "SOUND"},
+    {p: "Ritmo", e: "RHYTHM"}, {p: "Trompete", e: "TRUMPET"}, {p: "Madeira", e: "WOOD"}, {p: "Metal", e: "METAL"},
+    {p: "Plástico", e: "PLASTIC"}, {p: "Ouro", e: "GOLD"}, {p: "Prata", e: "SILVER"}, {p: "Bronze", e: "BRONZE"},
+    {p: "Diamante", e: "DIAMOND"}, {p: "Cristal", e: "CRYSTAL"}, {p: "Pérola", e: "PEARL"}, {p: "Tecido", e: "FABRIC"},
+    {p: "Algodão", e: "COTTON"}, {p: "Lã", e: "WOOL"}, {p: "Seda", e: "SILK"}, {p: "Couro", e: "LEATHER"},
+    {p: "Papelão", e: "CARDBOARD"}, {p: "Tijolo", e: "BRICK"}
+  ];
+
+  // Embaralha uma lista (algoritmo de Fisher-Yates)
+  function embaralhar(lista) {
+    for (let i = lista.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [lista[i], lista[j]] = [lista[j], lista[i]];
+    }
+    return lista;
+  }
+
+  // Junta as duas listas, embaralha e pega as primeiras TOTAL_PALAVRAS (sem repetir nenhuma).
+  // Converte para o formato usado no jogo: {portuguese, english}.
+  function gerarPalavras() {
+    const todas = embaralhar(palavrasBase.concat(palavrasNovas));
+    return todas.slice(0, TOTAL_PALAVRAS).map(function(w) {
+      return { portuguese: w.p, english: w.e };
+    });
+  }
+
+  // ---------- Estado do jogo ----------
+  let words = [];                          // palavras desta partida (preenchida ao apertar Enter)
+  const TEMPO_POR_PALAVRA = 600;           // 10 minutos para cada palavra
   const COR_LETRA = '#4CC3D9';
   const COR_LETRA_SELECIONADA = '#FFD700';
 
-  let currentWordIndex = 0;
-  let guessedLetters = [];
-  let score = 0;
-  let timeLeft = TEMPO_POR_PALAVRA;
-  let countdown;
-  let selectedLetter = null;
+  let currentWordIndex = 0;                // posição da palavra atual
+  let guessedLetters = [];                 // letras já descobertas ("_" = ainda não descoberta)
+  let score = 0;                           // pontuação
+  let timeLeft = TEMPO_POR_PALAVRA;        // tempo restante, em segundos
+  let countdown;                           // guarda o temporizador (setInterval)
+  let selectedLetter = null;               // letra para a qual o cursor está apontando
   let gameStarted = false;
   let gameOver = false;
   let feedbackTimeout = null;
-  let slotLetters = [];     // textos de cada casa da palavra
-  let slotUnderlines = [];  // linhas embaixo de cada casa
+  let slotLetters = [];                    // textos de cada casa da palavra
+  let slotUnderlines = [];                 // linhas embaixo de cada casa
 
+  const cena = document.querySelector('a-scene');
   const timerElement = document.querySelector('#timer');
   const portugueseWordElement = document.querySelector('#portuguese-word');
+  const promptLabelElement = document.querySelector('#prompt-label');
   const scoreElement = document.querySelector('#score');
   const feedbackElement = document.querySelector('#feedback');
+  const instrucoesElement = document.querySelector('#instruction-card');
   const boardElement = document.querySelector('#word-board');
+
+  // ---------- Textos em canvas
+  function atualizarTextura(elemento) {
+    const malha = elemento.getObject3D('mesh');
+    if (malha && malha.material && malha.material.map) {
+      malha.material.map.needsUpdate = true;
+    }
+  }
+
+  // Desenha uma linha de texto centralizada no canvas, diminuindo a fonte se não couber
+  function desenharLinha(canvasId, elemento, texto, tamanhoInicial, cor, contorno) {
+    const canvas = document.querySelector(canvasId);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (texto) {
+      let tamanho = tamanhoInicial;
+      ctx.font = `bold ${tamanho}px Arial, Helvetica, sans-serif`;
+      while (ctx.measureText(texto).width > canvas.width - 40 && tamanho > 20) {
+        tamanho -= 4;
+        ctx.font = `bold ${tamanho}px Arial, Helvetica, sans-serif`;
+      }
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(6, tamanho / 8);
+      ctx.strokeStyle = contorno;
+      ctx.strokeText(texto, canvas.width / 2, canvas.height / 2);
+      ctx.fillStyle = cor;
+      ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
+    }
+    atualizarTextura(elemento);
+  }
+
+  // Quebra um texto em linhas que cabem na largura máxima
+  function quebrarLinhas(ctx, texto, larguraMaxima) {
+    const palavras = texto.split(' ');
+    const linhas = [];
+    let atual = '';
+    palavras.forEach(function(palavra) {
+      const teste = atual ? atual + ' ' + palavra : palavra;
+      if (ctx.measureText(teste).width > larguraMaxima && atual) {
+        linhas.push(atual);
+        atual = palavra;
+      } else {
+        atual = teste;
+      }
+    });
+    if (atual) linhas.push(atual);
+    return linhas;
+  }
+
+  // Desenha o retângulo com cantos arredondados
+  function retanguloArredondado(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  // Desenha o cartão de instruções
+  function desenharInstrucoes() {
+    const canvas = document.querySelector('#canvas-instrucoes');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    retanguloArredondado(ctx, 14, 14, canvas.width - 28, canvas.height - 28, 54);
+    ctx.fillStyle = 'rgba(7, 21, 64, 0.94)';
+    ctx.fill();
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = '#ffb32c';
+    ctx.stroke();
+
+    // Título
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 62px Arial, Helvetica, sans-serif';
+    ctx.fillStyle = '#ffd27a';
+    const titulo = quebrarLinhas(ctx, 'Bem-vindo ao Caça ao Tesouro 3D da UEPG!', canvas.width - 140);
+    titulo.forEach(function(linha, i) {
+      ctx.fillText(linha, canvas.width / 2, 110 + i * 72);
+    });
+
+    // Tópicos
+    const topicos = [
+      'Você tem 10 minutos para traduzir cada palavra em inglês e encontrar as letras espalhadas pela floresta.',
+      'Aponte o cursor vermelho para a esfera com a letra e aperte ESPAÇO para confirmar.',
+      'Ande com as setas do teclado ou com as teclas W, A, S, D.',
+      'Complete ' + TOTAL_PALAVRAS + ' palavras para vencer o jogo.'
+    ];
+    const topoTopicos = 110 + (titulo.length - 1) * 72 + 36 + 45;  // logo abaixo do título
+    const baseTopicos = canvas.height - 150;                        // acima do aviso "Pressione ENTER"
+    const larguraTexto = canvas.width - 220;
+
+    // Começa com fonte grande e vai diminuindo até todos os tópicos caberem no espaço disponível
+    let fonte = 46;
+    let linhasPorTopico;
+    let altura;
+    while (true) {
+      ctx.font = fonte + 'px Arial, Helvetica, sans-serif';
+      linhasPorTopico = topicos.map(function(t) { return quebrarLinhas(ctx, t, larguraTexto); });
+      const totalLinhas = linhasPorTopico.reduce(function(soma, l) { return soma + l.length; }, 0);
+      altura = totalLinhas * fonte * 1.3 + (topicos.length - 1) * fonte * 0.6;
+      if (altura <= baseTopicos - topoTopicos || fonte <= 24) break;
+      fonte -= 2;
+    }
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    let y = topoTopicos;
+    linhasPorTopico.forEach(function(linhas) {
+      ctx.fillStyle = '#ffb32c';
+      ctx.fillText('•', 90, y);
+      ctx.fillStyle = '#ffffff';
+      linhas.forEach(function(linha, i) {
+        ctx.fillText(linha, 135, y + i * fonte * 1.3);
+      });
+      y += linhas.length * fonte * 1.3 + fonte * 0.6;
+    });
+
+    // Aviso para começar
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 54px Arial, Helvetica, sans-serif';
+    ctx.fillStyle = '#7fe3ff';
+    ctx.fillText('Pressione ENTER para começar', canvas.width / 2, canvas.height - 85);
+
+    atualizarTextura(instrucoesElement);
+  }
 
   // ---------- HUD ----------
   function formatTime(total) {
@@ -139,17 +528,18 @@
     scoreElement.setAttribute('value', String(score));
   }
 
+  // Mostra uma mensagem rápida (some depois de "duration" ms; com duration 0 ela fica)
   function showFeedback(message, duration) {
-    feedbackElement.setAttribute('value', message);
+    desenharLinha('#canvas-feedback', feedbackElement, message, 76, '#ffd27a', '#000000');
     clearTimeout(feedbackTimeout);
     if (duration) {
       feedbackTimeout = setTimeout(function() {
-        feedbackElement.setAttribute('value', '');
+        desenharLinha('#canvas-feedback', feedbackElement, '', 76, '#ffd27a', '#000000');
       }, duration);
     }
   }
 
-  // ---------- Quadro da palavra ----------
+  // ---------- Quadro da palavra (uma casa para cada letra) ----------
   function buildBoard(length) {
     while (boardElement.firstChild) {
       boardElement.removeChild(boardElement.firstChild);
@@ -191,25 +581,29 @@
   function initializeWord() {
     const word = words[currentWordIndex];
     guessedLetters = Array(word.english.length).fill("_");
-    portugueseWordElement.setAttribute('value', word.portuguese);
+
+    // Enunciado: número da palavra e a palavra em português (desenhada em canvas)
+    promptLabelElement.setAttribute('value', `Traduza (${currentWordIndex + 1}/${words.length})`);
+    desenharLinha('#canvas-portugues', portugueseWordElement, word.portuguese, 84, '#ffffff', '#000000');
+
     buildBoard(word.english.length);
     renderBoard();
 
-    // Remover letras existentes do grid
+    // Remove as letras da palavra anterior
     const letterGrid = document.querySelector('#letter-grid');
     while (letterGrid.firstChild) {
       letterGrid.removeChild(letterGrid.firstChild);
     }
 
-    // Adicionar letras da palavra em posições aleatórias no grid 3D
+    // Cria uma esfera para cada letra, em posições aleatórias na floresta
     const positions = [];
-    const gridSize = 96;
+    const gridSize = 120; // quanto maior, mais espalhadas ficam as letras
     for (let i = 0; i < word.english.length; i++) {
       let position;
       do {
         position = {
           x: (Math.random() - 0.5) * gridSize,
-          y: Math.random() * 2 + 1, // Altura entre 1 e 3
+          y: Math.random() * 2 + 1, // altura entre 1 e 3
           z: (Math.random() - 0.5) * gridSize
         };
       } while (positions.find(p => p.x === position.x && p.z === position.z));
@@ -220,7 +614,7 @@
       letterEntity.setAttribute('class', 'letter');
       letterEntity.setAttribute('id', `letter-${word.english[i]}`);
       letterEntity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
-      // A letra fica sobre a superfície da esfera, grande, e gira para sempre ficar de frente para o jogador
+      // A letra fica à frente da esfera, grande, e gira para ficar sempre de frente para o jogador
       letterEntity.innerHTML = `
         <a-sphere radius="0.6" color="${COR_LETRA}"></a-sphere>
         <a-entity face-camera>
@@ -233,36 +627,46 @@
     addLetterSelection();
   }
 
-  function finishGame(message) {
+  // Termina o jogo (vitória ou tempo esgotado): mostra a mensagem na tela e em um alerta
+  function finishGame(message, alerta) {
     gameOver = true;
     clearInterval(countdown);
     showFeedback(message, 0);
+    setTimeout(function() { alert(alerta); }, 400);
   }
 
   function loadWord() {
+    // Chegou ao fim das palavras: parabéns!
     if (currentWordIndex >= words.length) {
-      finishGame(`Parabens! Voce completou o jogo com ${score} pontos.`);
+      finishGame(
+        `Parabéns! Você completou o jogo com ${score} pontos.`,
+        `Parabéns! Você completou o jogo!\nPalavras: ${words.length}\nPontos: ${score}`
+      );
       return;
     }
 
     initializeWord();
     updateScoreDisplay();
-    timeLeft = TEMPO_POR_PALAVRA; // Reiniciar o timer para cada palavra
+    timeLeft = TEMPO_POR_PALAVRA; // reinicia o tempo para cada palavra
     updateTimerDisplay();
   }
 
+  // Cronômetro: diminui 1 segundo por vez até chegar a zero
   function startTimer() {
     countdown = setInterval(function() {
       if (timeLeft > 0) {
         timeLeft--;
         updateTimerDisplay();
       } else {
-        finishGame(`Tempo esgotado! Pontuacao final: ${score}`);
+        finishGame(
+          `Tempo esgotado! Pontuação final: ${score}`,
+          `Tempo esgotado!\nPalavras completas: ${currentWordIndex}\nPontos: ${score}`
+        );
       }
     }, 1000);
   }
 
-  // Detectando qual letra está sendo selecionada
+  // Cor da esfera ao apontar o cursor, e guarda qual letra está selecionada
   function addLetterSelection() {
     document.querySelectorAll('.letter').forEach(function(letter) {
       letter.addEventListener('mouseenter', function () {
@@ -276,13 +680,14 @@
     });
   }
 
-  // Tecla espaço confirma a letra apontada pelo cursor
+  // Tecla Espaço: confirma a letra apontada
   document.addEventListener('keydown', function(event) {
     if (event.code !== 'Space' || !selectedLetter || !gameStarted || gameOver) return;
 
     const word = words[currentWordIndex].english;
     let correctGuess = false;
 
+    // Preenche as casas que têm a letra escolhida
     for (let i = 0; i < word.length; i++) {
       if (word[i] === selectedLetter && guessedLetters[i] === "_") {
         guessedLetters[i] = selectedLetter;
@@ -301,16 +706,17 @@
       });
       selectedLetter = null;
 
-      score += 1; // Incrementar pontuação a cada letra correta
+      score += 1; // um ponto por letra certa
       updateScoreDisplay();
       showFeedback('Boa! Letra certa!', 1500);
     } else {
-      showFeedback('Essa letra nao esta na palavra', 1500);
+      showFeedback('Essa letra não está na palavra', 1500);
     }
 
+    // Palavra completa: vai para a próxima (ou para o fim do jogo, se foi a última)
     if (guessedLetters.join("") === word) {
       currentWordIndex++;
-      showFeedback('Correto! Proxima palavra...', 0);
+      showFeedback(currentWordIndex >= words.length ? 'Última palavra concluída!' : 'Correto! Próxima palavra...', 0);
       setTimeout(function() {
         showFeedback('', 0);
         loadWord();
@@ -318,26 +724,33 @@
     }
   });
 
-  // Iniciar o jogo
+  // Inicia o jogo: sorteia as palavras, esconde as instruções e mostra o quadro e as letras
   function startGame() {
-    if (gameStarted) return; 
-    document.querySelector('#instruction-card').setAttribute('visible', 'false');
+    if (gameStarted) return; // só inicia uma vez
+    gameStarted = true;
+
+    words = gerarPalavras();
+
+    instrucoesElement.setAttribute('visible', 'false');
+    instrucoesElement.setAttribute('position', '0 -100 -3'); // tira o cartão do caminho do cursor
     document.querySelector('#word-board').setAttribute('visible', 'true');
     document.querySelector('#letter-grid').setAttribute('visible', 'true');
 
-    gameStarted = true;
     loadWord();
     startTimer();
     showFeedback('Procure as esferas azuis na floresta', 6000);
   }
 
+  // Tecla Enter: começa o jogo
   document.addEventListener('keydown', function(event) {
     if (event.code === 'Enter') {
       startGame();
     }
   });
 
-  // Estado inicial do HUD
+  // Estado inicial: desenha o cartão de instruções e o HUD
+  desenharInstrucoes();
+  cena.addEventListener('loaded', desenharInstrucoes); // redesenha quando a cena termina de carregar (garante a textura)
   updateTimerDisplay();
   updateScoreDisplay();
 </script>

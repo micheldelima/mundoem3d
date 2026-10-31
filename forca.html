@@ -13,7 +13,7 @@
 <body>
   <a-scene>
     <a-assets>
-      <!-- Canvas onde a palavra em português é desenhada (proporção 8:1, igual à do plano; para mudar o tamanho na tela, altere width e height do plano mantendo essa proporção) -->
+      <!-- Canvas onde a palavra em português é desenhada (proporção 8:1)-->
       <canvas id="canvas-portugues" width="1024" height="128"></canvas>
     </a-assets>
 
@@ -29,10 +29,10 @@
     <a-entity id="instruction-card" position="0 1.6 -3">
       <a-plane color="#000" width="4" height="3" material="side: double">
         <a-text value="Bem-vindo ao Jogo da Forca do Mundo em 3D da UEPG!" position="0 1 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="1. Voce tem 10 minutos para acertar as palavras." position="0 0.4 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="2. Use o cursor vermelho para selecionar uma letra." position="0 0 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="3. Pressione Espaco para confirmar sua escolha." position="0 -0.4 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="Pressione Enter para comecar" position="0 -1 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="- 10 minutos para acertar as palavras." position="0 0.4 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="- Use o cursor vermelho para selecionar uma letra e use as setas ou as letras A D W S para se movimentar." position="0 0 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="- Pressione Espaco para confirmar sua escolha." position="0 -0.4 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="Pressione Enter para iniciar" position="0 -1 0" align="center" color="#FFF" width="3.5"></a-text>
       </a-plane>
     </a-entity>
 
