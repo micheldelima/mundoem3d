@@ -72,7 +72,7 @@ mundoem3d/
     └── background-music.mp3 # Música de fundo do menu
 ```
 # Acesso Online
-O projeto está hospedado e publicado via GitHub Pages e pode ser jogado diretamente pelo navegador.
-### Link: [https://micheldelima.github.io/mundoem3d/](https://micheldelima.github.io/mundoem3d)
+### O projeto está hospedado e publicado via GitHub Pages e pode ser jogado diretamente pelo navegador.
+###🌍 Link: [https://micheldelima.github.io/mundoem3d/](https://micheldelima.github.io/mundoem3d)
 
-## Projeto de Extensão 3 - Engenharia de Software - UEPG (2024)
+### Projeto de Extensão 3 - Engenharia de Software - UEPG (2024)
