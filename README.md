@@ -1,6 +1,6 @@
 # 🌍 Mundo em 3D: A Aventura em Palavras (UEPG)
 
-Este é um projeto de extensão inovador do curso de **Engenharia de Software da Universidade Estadual de Ponta Grossa (UEPG)**, no Paraná. O objetivo principal é explorar o potencial da Realidade Virtual (VR) como ferramenta pedagógica para enriquecer o processo de ensino-aprendizagem de inglês em escolas da região.
+Projeto de extensão para a disciplina de Prática Extensionista 2, realizado no ano de 2024, do curso de **Engenharia de Software da Universidade Estadual de Ponta Grossa (UEPG)**, no Paraná. O objetivo principal é explorar o potencial da Realidade Virtual (VR) como ferramenta pedagógica para enriquecer o processo de ensino-aprendizagem de inglês em escolas da região.
 
 O projeto utiliza tecnologias web (HTML, CSS, JS e o framework **A-Frame**) para criar uma experiência imersiva e acessível diretamente pelo navegador, sem a necessidade de instalar aplicativos ou possuir óculos de VR (embora seja compatível com eles).
 
