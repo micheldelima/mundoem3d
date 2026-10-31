@@ -38,8 +38,6 @@
 
     <!-- Palavra oculta (traços) e palavra em português a traduzir (inicialmente escondidas) -->
     <a-text id="hidden-word" value="" color="#FFF" position="0 2.5 -3" width="6" visible="false"></a-text>
-    <!-- A fonte padrão do A-Frame não tem acentos nem "ç". Por isso a palavra em português é desenhada
-         em um canvas (que usa as fontes do navegador) e mostrada como textura neste plano. -->
     <a-plane id="portuguese-word" position="0 2 -3" width="3.6" height="0.45"
              material="shader: flat; src: #canvas-portugues; transparent: true" visible="false"></a-plane>
 
@@ -166,7 +164,6 @@
 <script>
   // ---------- Lista de palavras ----------
   const words = [
-    // Palavras originais do jogo
     {portuguese: "FERRAMENTA", english: "TOOL"},
     {portuguese: "TESOURO", english: "TREASURE"},
     {portuguese: "Casa", english: "HOUSE"},
