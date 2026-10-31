@@ -7,13 +7,19 @@ O projeto utiliza tecnologias web (HTML, CSS, JS e o framework **A-Frame**) para
 ## 🖼️ Capturas de Tela
 
 ### Menu Principal
-![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/menu.png)
+![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/inicio-mundoem3d.png)
+
+### Área dos Jogos
+![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/jogos-mundoem3d.png)
+
+### Instruções dos Jogos
+![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/instruções-mundoem3d.png)
 
 ### Quiz Interativo
-![Quiz Interativo](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/quiz.png)
+![Quiz Interativo](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/quiz-mundoem3d.png)
 
 ### Jogo da Forca
-![Jogo da Forca](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/forca.png)
+![Jogo da Forca](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/forca-mundoem3d.png)
 
 ### Caça ao Tesouro
 ![Caça ao Tesouro](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/caca_tesouro.png)
