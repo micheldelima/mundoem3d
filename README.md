@@ -1,6 +1,6 @@
 # 🌍 Mundo em 3D: A Aventura em Palavras (UEPG)
 
-Projeto de extensão para a disciplina de Prática Extensionista 2, realizado no ano de 2024, do curso de **Engenharia de Software da Universidade Estadual de Ponta Grossa (UEPG)**, no Paraná. O objetivo principal é explorar o potencial da Realidade Virtual (VR) como ferramenta pedagógica para enriquecer o processo de ensino-aprendizagem de inglês em escolas da região.
+Projeto de extensão para a disciplina de Prática Extensionista 3, realizado no ano de 2024, do curso de **Engenharia de Software da Universidade Estadual de Ponta Grossa (UEPG)**, no Paraná. O objetivo principal é explorar o potencial da Realidade Virtual (VR) como ferramenta pedagógica para enriquecer o processo de ensino-aprendizagem de inglês em escolas da região.
 
 O projeto utiliza tecnologias web (HTML, CSS, JS e o framework **A-Frame**) para criar uma experiência imersiva e acessível diretamente pelo navegador, sem a necessidade de instalar aplicativos ou possuir óculos de VR (embora seja compatível com eles).
 
@@ -75,4 +75,11 @@ mundoem3d/
 ### O projeto está hospedado e publicado via GitHub Pages e pode ser jogado diretamente pelo navegador.
 🌍 Link: [https://micheldelima.github.io/mundoem3d/](https://micheldelima.github.io/mundoem3d)
 
-### Projeto de Extensão 3 - Engenharia de Software - UEPG (2024)
+# Clone este repositório:
+### git clone https://github.com/micheldelima/mundoem3d.git
+
+# 👨‍💻 Autores do projeto
+### Michel de Lima
+### Carolina Picheictt Carvalho Gomes
+### Ano/Série: 2º ano / Projeto de Extensão 3 - Engenharia de Software - UEPG (2024)
+
