@@ -4,26 +4,6 @@ Este é um projeto de extensão inovador do curso de **Engenharia de Software da
 
 O projeto utiliza tecnologias web (HTML, CSS, JS e o framework **A-Frame**) para criar uma experiência imersiva e acessível diretamente pelo navegador, sem a necessidade de instalar aplicativos ou possuir óculos de VR (embora seja compatível com eles).
 
-## 🖼️ Capturas de Tela
-
-### Menu Principal
-![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/inicio-mundoem3d.png)
-
-### Área dos Jogos
-![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/jogos-mundoem3d.png)
-
-### Instruções dos Jogos
-![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/instruções-mundoem3d.png)
-
-### Quiz Interativo
-![Quiz Interativo](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/quiz-mundoem3d.png)
-
-### Jogo da Forca
-![Jogo da Forca](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/forca-mundoem3d.png)
-
-### Caça ao Tesouro
-![Caça ao Tesouro](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/caca_tesouro.png)
-
 ## 🎮 Os 3 Jogos
 
 O projeto conta com um menu inicial em 2D e uma "Área de Jogos" com três experiências em Realidade Virtual:
@@ -50,6 +30,28 @@ O projeto conta com um menu inicial em 2D e uma "Área de Jogos" com três exper
 - **HTML5 Canvas & JavaScript:** Utilizados para renderizar o texto de forma nítida na cena 3D, garantindo o suporte correto a acentos (ç, ã, etc.), já que as fontes padrão do A-Frame não suportam todos os caracteres.
 - **CSS3:** Estilização do menu principal, instruções e página "Sobre".
 
+## 🖼️ Capturas de Tela
+
+### Menu Principal
+![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/inicio-mundoem3d.png)
+
+### Área dos Jogos
+![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/jogos-mundoem3d.png)
+
+### Instruções dos Jogos
+![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/instruções-mundoem3d.png)
+
+### Quiz Interativo
+![Quiz Interativo](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/quiz-mundoem3d.png)
+
+### Jogo da Forca
+![Jogo da Forca](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/forca-mundoem3d.png)
+
+### Caça ao Tesouro
+![Caça ao Tesouro](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/caçatesouro-mundoem3d.png)
+
+
+
 ## 📁 Estrutura do Projeto
 
 ```text
@@ -68,5 +70,6 @@ mundoem3d/
 │
 └── audio/
     └── background-music.mp3 # Música de fundo do menu
+```
 
-
+# Projeto de Extensão 3 - Engenharia de Software - UEPG (2024)
