@@ -12,15 +12,20 @@
 </head>
 <body>
   <a-scene>
-    <!-- Camera and Cursor -->
+    <a-assets>
+      <!-- Canvas onde a palavra em português é desenhada (proporção 8:1, igual à do plano; para mudar o tamanho na tela, altere width e height do plano mantendo essa proporção) -->
+      <canvas id="canvas-portugues" width="1024" height="128"></canvas>
+    </a-assets>
+
+    <!-- Câmera e cursor -->
     <a-camera position="0 1.6 0">
       <a-cursor id="cursor" color="red"></a-cursor>
     </a-camera>
 
-    <!-- Environment: Starry -->
+    <!-- Ambiente: céu estrelado -->
     <a-entity environment="preset: starry; groundColor: #445; grid: cross"></a-entity>
 
-    <!-- Instruction Card -->
+    <!-- Cartão de instruções -->
     <a-entity id="instruction-card" position="0 1.6 -3">
       <a-plane color="#000" width="4" height="3" material="side: double">
         <a-text value="Bem-vindo ao Jogo da Forca do Mundo em 3D da UEPG!" position="0 1 0" align="center" color="#FFF" width="3.5"></a-text>
@@ -31,10 +36,14 @@
       </a-plane>
     </a-entity>
 
-    <!-- Target Word to Translate (Initially Hidden) -->
+    <!-- Palavra oculta (traços) e palavra em português a traduzir (inicialmente escondidas) -->
     <a-text id="hidden-word" value="" color="#FFF" position="0 2.5 -3" width="6" visible="false"></a-text>
-    <a-text id="portuguese-word" value="" color="#FFF" position="0 2 -3" width="6" visible="false"></a-text>
+    <!-- A fonte padrão do A-Frame não tem acentos nem "ç". Por isso a palavra em português é desenhada
+         em um canvas (que usa as fontes do navegador) e mostrada como textura neste plano. -->
+    <a-plane id="portuguese-word" position="0 2 -3" width="3.6" height="0.45"
+             material="shader: flat; src: #canvas-portugues; transparent: true" visible="false"></a-plane>
 
+    <!-- Alfabeto: uma esfera para cada letra de A a Z (inicialmente escondido) -->
     <a-entity id="alphabet" position="0 1 -3" visible="false">
   <a-entity class="letter" id="letter-A" position="-6 0 0">
     <a-sphere radius="0.5" color="#4CC3D9"></a-sphere>
@@ -143,19 +152,21 @@
 </a-entity>
 
 
-    <!-- Feedback Text (Initially Hidden) -->
+    <!-- Texto de feedback (inicialmente escondido) -->
     <a-text id="feedback" value="" color="#FFF" position="0 1.5 -2.5" width="6" visible="false"></a-text>
 
-    <!-- Timer Text (Initially Hidden) -->
+    <!-- Texto do tempo (inicialmente escondido) -->
     <a-text id="timer" value="Time: 600" color="#FFF" position="0 3 -3" width="6" visible="false"></a-text>
 
-    <!-- Score Text (Initially Hidden) -->
+    <!-- Texto da pontuação (inicialmente escondido) -->
     <a-text id="score" value="Score: 0" color="#FFF" position="2 3 -3" width="6" visible="false"></a-text>
 
   </a-scene>
 
 <script>
+  // ---------- Lista de palavras ----------
   const words = [
+    // Palavras originais do jogo
     {portuguese: "FERRAMENTA", english: "TOOL"},
     {portuguese: "TESOURO", english: "TREASURE"},
     {portuguese: "Casa", english: "HOUSE"},
@@ -165,116 +176,196 @@
     {portuguese: "Computador", english: "COMPUTER"},
     {portuguese: "Telefone", english: "PHONE"},
     {portuguese: "FESTA", english: "PARTY"},
-    {portuguese: "Janela", english: "WINDOW"}
+    {portuguese: "Janela", english: "WINDOW"},
+
+    {portuguese: "Gato", english: "CAT"}, {portuguese: "Pássaro", english: "BIRD"}, {portuguese: "Peixe", english: "FISH"}, {portuguese: "Cavalo", english: "HORSE"}, {portuguese: "Vaca", english: "COW"},
+    {portuguese: "Porco", english: "PIG"}, {portuguese: "Ovelha", english: "SHEEP"}, {portuguese: "Galinha", english: "CHICKEN"}, {portuguese: "Pato", english: "DUCK"}, {portuguese: "Coelho", english: "RABBIT"},
+    {portuguese: "Macaco", english: "MONKEY"}, {portuguese: "Leão", english: "LION"}, {portuguese: "Elefante", english: "ELEPHANT"}, {portuguese: "Tigre", english: "TIGER"}, {portuguese: "Urso", english: "BEAR"},
+    {portuguese: "Cobra", english: "SNAKE"}, {portuguese: "Sapo", english: "FROG"}, {portuguese: "Tartaruga", english: "TURTLE"}, {portuguese: "Abelha", english: "BEE"}, {portuguese: "Borboleta", english: "BUTTERFLY"},
+    {portuguese: "Maçã", english: "APPLE"}, {portuguese: "Banana", english: "BANANA"}, {portuguese: "Laranja", english: "ORANGE"}, {portuguese: "Uva", english: "GRAPE"}, {portuguese: "Morango", english: "STRAWBERRY"},
+    {portuguese: "Leite", english: "MILK"}, {portuguese: "Pão", english: "BREAD"}, {portuguese: "Queijo", english: "CHEESE"}, {portuguese: "Ovo", english: "EGG"}, {portuguese: "Água", english: "WATER"},
+    {portuguese: "Suco", english: "JUICE"}, {portuguese: "Arroz", english: "RICE"}, {portuguese: "Bolo", english: "CAKE"}, {portuguese: "Sopa", english: "SOUP"}, {portuguese: "Carne", english: "MEAT"},
+    {portuguese: "Sal", english: "SALT"}, {portuguese: "Açúcar", english: "SUGAR"}, {portuguese: "Pizza", english: "PIZZA"}, {portuguese: "Biscoito", english: "COOKIE"}, {portuguese: "Sol", english: "SUN"},
+    {portuguese: "Lua", english: "MOON"}, {portuguese: "Estrela", english: "STAR"}, {portuguese: "Nuvem", english: "CLOUD"}, {portuguese: "Chuva", english: "RAIN"}, {portuguese: "Neve", english: "SNOW"},
+    {portuguese: "Vento", english: "WIND"}, {portuguese: "Árvore", english: "TREE"}, {portuguese: "Flor", english: "FLOWER"}, {portuguese: "Rio", english: "RIVER"}, {portuguese: "Mar", english: "SEA"},
+    {portuguese: "Montanha", english: "MOUNTAIN"}, {portuguese: "Floresta", english: "FOREST"}, {portuguese: "Praia", english: "BEACH"}, {portuguese: "Pedra", english: "STONE"}, {portuguese: "Fogo", english: "FIRE"},
+    {portuguese: "Céu", english: "SKY"}, {portuguese: "Cabeça", english: "HEAD"}, {portuguese: "Mão", english: "HAND"}, {portuguese: "Pé", english: "FOOT"}, {portuguese: "Olho", english: "EYE"},
+    {portuguese: "Nariz", english: "NOSE"}, {portuguese: "Boca", english: "MOUTH"}, {portuguese: "Orelha", english: "EAR"}, {portuguese: "Braço", english: "ARM"}, {portuguese: "Perna", english: "LEG"},
+    {portuguese: "Coração", english: "HEART"}, {portuguese: "Porta", english: "DOOR"}, {portuguese: "Mesa", english: "TABLE"}, {portuguese: "Cadeira", english: "CHAIR"}, {portuguese: "Cama", english: "BED"},
+    {portuguese: "Chave", english: "KEY"}, {portuguese: "Relógio", english: "CLOCK"}, {portuguese: "Lâmpada", english: "LAMP"}, {portuguese: "Espelho", english: "MIRROR"}, {portuguese: "Caneta", english: "PEN"},
+    {portuguese: "Lápis", english: "PENCIL"}, {portuguese: "Mochila", english: "BACKPACK"}, {portuguese: "Bola", english: "BALL"}, {portuguese: "Brinquedo", english: "TOY"}, {portuguese: "Cozinha", english: "KITCHEN"},
+    {portuguese: "Jardim", english: "GARDEN"}, {portuguese: "Carro", english: "CAR"}, {portuguese: "Ônibus", english: "BUS"}, {portuguese: "Avião", english: "PLANE"}, {portuguese: "Barco", english: "BOAT"},
+    {portuguese: "Trem", english: "TRAIN"}, {portuguese: "Bicicleta", english: "BICYCLE"}, {portuguese: "Rua", english: "STREET"}, {portuguese: "Ponte", english: "BRIDGE"}, {portuguese: "Camisa", english: "SHIRT"},
+    {portuguese: "Sapato", english: "SHOE"}, {portuguese: "Chapéu", english: "HAT"}, {portuguese: "Mãe", english: "MOTHER"}, {portuguese: "Pai", english: "FATHER"}, {portuguese: "Irmão", english: "BROTHER"},
+    {portuguese: "Irmã", english: "SISTER"}, {portuguese: "Amigo", english: "FRIEND"}, {portuguese: "Professor", english: "TEACHER"}, {portuguese: "Menino", english: "BOY"}, {portuguese: "Menina", english: "GIRL"}
   ];
 
-  let currentWordIndex = 0;
-let guessedWord = [];
-let chances = 6;
-let score = 0;
-let timeLeft = 600;
-let countdown = null;
-let selectedLetter = null;
-const timerElement = document.querySelector('#timer');
-const feedbackElement = document.querySelector('#feedback');
-const hiddenWordElement = document.querySelector('#hidden-word');
-const portugueseWordElement = document.querySelector('#portuguese-word');
-const scoreElement = document.querySelector('#score');
+  // Embaralha a lista (algoritmo de Fisher-Yates) para a ordem das palavras mudar a cada partida
+  function embaralhar(lista) {
+    for (let i = lista.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [lista[i], lista[j]] = [lista[j], lista[i]];
+    }
+    return lista;
+  }
+  embaralhar(words);
 
-// Function to initialize the word to guess
-function initializeWord() {
+  // ---------- Estado do jogo ----------
+  let currentWordIndex = 0;   // posição da palavra atual na lista
+  let guessedWord = [];       // letras já descobertas ("_" = ainda não descoberta)
+  let chances = 6;            // erros permitidos por palavra
+  let score = 0;              // pontuação total
+  let timeLeft = 600;         // tempo total do jogo, em segundos (10 minutos)
+  let countdown = null;       // guarda o temporizador (setInterval)
+  let selectedLetter = null;  // letra para a qual o cursor está apontando
+  let aguardando = false;     // true enquanto o alerta está para aparecer ou aberto (ignora o Espaço)
+  let jogoIniciado = false;   // evita iniciar o jogo duas vezes ao apertar Enter de novo
+
+  // Cores das esferas: normal e quando o cursor está em cima
+  const COR_ESFERA = '#4CC3D9';
+  const COR_ESFERA_SELECIONADA = '#FFD700';
+  const timerElement = document.querySelector('#timer');
+  const feedbackElement = document.querySelector('#feedback');
+  const hiddenWordElement = document.querySelector('#hidden-word');
+  const portugueseWordElement = document.querySelector('#portuguese-word');
+  const scoreElement = document.querySelector('#score');
+
+  // Desenha o texto em português no canvas
+  function desenharPalavraPortugues(texto) {
+    const canvas = document.querySelector('#canvas-portugues');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Diminui a fonte se o texto for largo demais para o canvas
+    let tamanho = 84;
+    ctx.font = `bold ${tamanho}px Arial, Helvetica, sans-serif`;
+    while (ctx.measureText(texto).width > canvas.width - 40 && tamanho > 30) {
+      tamanho -= 4;
+      ctx.font = `bold ${tamanho}px Arial, Helvetica, sans-serif`;
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#000000';   // contorno escuro para facilitar a leitura
+    ctx.strokeText(texto, canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
+
+    // Avisa o A-Frame que o canvas mudou, para ele atualizar a textura
+    const malha = portugueseWordElement.getObject3D('mesh');
+    if (malha && malha.material && malha.material.map) {
+      malha.material.map.needsUpdate = true;
+    }
+  }
+
+  // Prepara a palavra atual: mostra a palavra em português e os traços da resposta
+  function initializeWord() {
     const word = words[currentWordIndex];
     guessedWord = Array(word.english.length).fill("_");
     hiddenWordElement.setAttribute('value', guessedWord.join(" "));
-    portugueseWordElement.setAttribute('value', `Traduza: ${word.portuguese}`);
-}
+    desenharPalavraPortugues(`Traduza: ${word.portuguese}`);
+  }
 
-// Function to load the next word
-function loadWord() {
+  // Carrega a próxima palavra (ou encerra o jogo se acabaram as palavras)
+  function loadWord() {
     if (currentWordIndex >= words.length) {
-        feedbackElement.setAttribute('value', `Parabens! Voce completou o jogo com ${score} pontos.`);
-        clearInterval(countdown); // Stop the timer when the game ends
-        return;
+      feedbackElement.setAttribute('value', `Parabens! Voce completou o jogo com ${score} pontos.`);
+      clearInterval(countdown); // para o tempo quando o jogo termina
+      return;
     }
 
     initializeWord();
     chances = 6;
     scoreElement.setAttribute('value', `Score: ${score}`);
-}
+  }
 
-// Timer logic
-function startTimer() {
-    if (countdown === null) { // Start the timer only if it's not already running
-        countdown = setInterval(function() {
-            if (timeLeft > 0) {
-                timeLeft--;
-                timerElement.setAttribute('value', 'Time: ' + timeLeft);
-            } else {
-                clearInterval(countdown);
-                feedbackElement.setAttribute('value', 'Tempo Esgotado!');
-                setTimeout(() => {
-                    feedbackElement.setAttribute('value', `Fim do jogo! Seu score final é ${score}`);
-                }, 1000);
-            }
-        }, 1000);
+  // Lógica do tempo: diminui 1 segundo por vez até chegar a zero
+  function startTimer() {
+    if (countdown === null) { // só inicia o tempo se ele ainda não estiver rodando
+      countdown = setInterval(function() {
+        if (timeLeft > 0) {
+          timeLeft--;
+          timerElement.setAttribute('value', 'Time: ' + timeLeft);
+        } else {
+          clearInterval(countdown);
+          feedbackElement.setAttribute('value', 'Tempo Esgotado!');
+          setTimeout(() => {
+            feedbackElement.setAttribute('value', `Fim do jogo! Seu score final é ${score}`);
+          }, 1000);
+        }
+      }, 1000);
     }
-}
+  }
 
-// Detecting which letter is being selected
-document.querySelectorAll('.letter').forEach(function(letter) {
+  // Detecta qual letra está sendo apontada pelo cursor (entra e sai da esfera).
+  // Enquanto o cursor está em cima, a esfera muda de cor.
+  document.querySelectorAll('.letter').forEach(function(letter) {
     letter.addEventListener('mouseenter', function () {
-        selectedLetter = letter.querySelector('a-text').getAttribute('value');
+      selectedLetter = letter.querySelector('a-text').getAttribute('value');
+      letter.querySelector('a-sphere').setAttribute('color', COR_ESFERA_SELECIONADA);
     });
     letter.addEventListener('mouseleave', function () {
-        selectedLetter = null;
+      selectedLetter = null;
+      letter.querySelector('a-sphere').setAttribute('color', COR_ESFERA);
     });
-});
+  });
 
-// Handle space key to confirm the choice
-document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' && selectedLetter) {
-        const word = words[currentWordIndex].english;
-        let correctGuess = false;
+  // Tecla Espaço: confirma a letra escolhida
+  document.addEventListener('keydown', function(event) {
+    if (event.code === 'Space' && selectedLetter && !aguardando) {
+      const word = words[currentWordIndex].english;
+      let correctGuess = false;
 
-        for (let i = 0; i < word.length; i++) {
-            if (word[i] === selectedLetter) {
-                guessedWord[i] = selectedLetter;
-                correctGuess = true;
-            }
+      // Preenche todas as posições da palavra que têm a letra escolhida
+      for (let i = 0; i < word.length; i++) {
+        if (word[i] === selectedLetter) {
+          guessedWord[i] = selectedLetter;
+          correctGuess = true;
         }
+      }
 
-        hiddenWordElement.setAttribute('value', guessedWord.join(" "));
+      hiddenWordElement.setAttribute('value', guessedWord.join(" "));
 
-        if (!correctGuess) {
-            chances--;
-            feedbackElement.setAttribute('value', `Chances restantes: ${chances}`);
-        }
+      // Letra errada: perde uma chance (o número de chances continua aparecendo na tela)
+      if (!correctGuess) {
+        chances--;
+        feedbackElement.setAttribute('value', `Chances restantes: ${chances}`);
+      }
 
-        if (guessedWord.join("") === word) {
-            score += chances; // Add remaining chances to score
-            currentWordIndex++;
-            feedbackElement.setAttribute('value', 'Correto! Proxima palavra...');
-            setTimeout(() => {
-                feedbackElement.setAttribute('value', '');
-                loadWord();
-            }, 5000);
-        }
+      // Palavra completa: soma as chances que sobraram à pontuação
+      const palavraCompleta = guessedWord.join("") === word;
+      if (palavraCompleta) {
+        score += chances;
+      }
+      scoreElement.setAttribute('value', `Score: ${score}`);
 
-        if (chances <= 0) {
-            currentWordIndex++;
-            feedbackElement.setAttribute('value', `Fim das chances! A palavra era ${word}`);
-            setTimeout(() => {
-                feedbackElement.setAttribute('value', '');
-                loadWord();
-            }, 2000);
-        }
+      // Acertou a palavra ou acabaram as chances: mostra um alerta e passa para a próxima palavra
+      if (palavraCompleta || chances <= 0) {
+        aguardando = true;
+        currentWordIndex++;
 
-        scoreElement.setAttribute('value', `Score: ${score}`);
+        // Pequena espera para a tela desenhar a última letra antes de o alerta travar a página
+        setTimeout(function() {
+          if (palavraCompleta) {
+            alert(`Correto! A palavra era ${word}.\nPontos: ${score}`);
+          } else {
+            alert(`Fim das chances! A palavra era ${word}.`);
+          }
+          feedbackElement.setAttribute('value', '');
+          aguardando = false;
+          loadWord();
+        }, 300);
+      }
     }
-});
+  });
 
-// Function to start the game
-function startGame() {
+  // Inicia o jogo: esconde as instruções e mostra os elementos do jogo
+  function startGame() {
+    if (jogoIniciado) return; // só inicia uma vez
+    jogoIniciado = true;
+
     document.querySelector('#instruction-card').setAttribute('visible', 'false');
     document.querySelector('#hidden-word').setAttribute('visible', 'true');
     document.querySelector('#portuguese-word').setAttribute('visible', 'true');
@@ -285,16 +376,14 @@ function startGame() {
 
     loadWord();
     startTimer();
-}
+  }
 
-// Detecting Enter key to start the game
-document.addEventListener('keydown', function(event) {
+  // Tecla Enter: começa o jogo
+  document.addEventListener('keydown', function(event) {
     if (event.code === 'Enter') {
-        startGame();
+      startGame();
     }
-});
-
-
+  });
 </script>
 </body>
 </html>

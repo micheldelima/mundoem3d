@@ -12,205 +12,394 @@
 </head>
 <body>
   <a-scene>
-    <!-- Camera and Cursor -->
+    <a-assets>
+      <!-- Canvas onde a palavra em português é desenhada -->
+      <canvas id="canvas-portugues" width="1024" height="128"></canvas>
+    </a-assets>
+
+    <!-- Câmera e cursor -->
     <a-camera position="0 1.6 0">
       <a-cursor id="cursor" color="red"></a-cursor>
     </a-camera>
-    
-    <!-- Environment: Forest -->
+
+    <!-- Ambiente: mina de ouro -->
     <a-entity environment="preset: goldmine; groundColor: #445; grid: cross"></a-entity>
-    
-    <!-- Instruction Card -->
+
+    <!-- Cartão de instruções -->
     <a-entity id="instruction-card" position="0 1.6 -3">
       <a-plane color="#000" width="4" height="3" material="side: double">
         <a-text value="Bem-vindo ao Quiz do Mundo em 3D da UEPG!" position="0 1 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="1. 30 segundos de tempo, e 35 palavras para traduzir." position="0 0.4 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="2. Use o cursor vermelho para selecionar uma esfera." position="0 0 0" align="center" color="#FFF" width="3.5"></a-text>
-        <a-text value="3. Pressione Espaco para selecionar a esfera e confirmar sua escolha." position="0 -0.4 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text id="instrucao-palavras" value="1. 30 segundos por palavra." position="0 0.4 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="2. Use o cursor vermelho para selecionar uma esfera e ENTER para confirmar a resposta." position="0 0 0" align="center" color="#FFF" width="3.5"></a-text>
+        <a-text value="3. Use as setas do teclado ou as letras A D W S para se movimentar." position="0 -0.4 0" align="center" color="#FFF" width="3.5"></a-text>
         <a-text value="Pressione Enter para comecar" position="0 -1 0" align="center" color="#FFF" width="3.5"></a-text>
       </a-plane>
     </a-entity>
 
-    <!-- Target Word to Translate (Initially Hidden) -->
-    <a-text id="target-word" value="Traduza: Carro" color="#FFF" position="0 2.5 -3" width="6" visible="false"></a-text>
+    <!-- Palavra em português a traduzir (inicialmente escondida). -->
+    <a-plane id="target-word" position="0 2.5 -3" width="3.6" height="0.45"
+             material="shader: flat; src: #canvas-portugues; transparent: true" visible="false"></a-plane>
 
-    <!-- Answer Options (Spheres with Text) Initially Hidden -->
+    <!-- Opções de resposta: esferas com a tradução (inicialmente escondidas) -->
     <a-entity id="option1" class="option" position="-2 1.5 -3" visible="false">
       <a-sphere radius="0.5" color="#4CC3D9"></a-sphere>
-      <a-text value="Car" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
+      <a-text value="" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
     </a-entity>
 
     <a-entity id="option2" class="option" position="-0.5 1.5 -3" visible="false">
       <a-sphere radius="0.5" color="#EF2D5E"></a-sphere>
-      <a-text value="Bike" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
+      <a-text value="" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
     </a-entity>
 
     <a-entity id="option3" class="option" position="1 1.5 -3" visible="false">
       <a-sphere radius="0.5" color="#24CAFF"></a-sphere>
-      <a-text value="Plane" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
+      <a-text value="" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
     </a-entity>
 
     <a-entity id="option4" class="option" position="2.5 1.5 -3" visible="false">
       <a-sphere radius="0.5" color="#FF6347"></a-sphere>
-      <a-text value="Boat" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
+      <a-text value="" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
     </a-entity>
 
     <a-entity id="option5" class="option" position="4 1.5 -3" visible="false">
       <a-sphere radius="0.5" color="#9ACD32"></a-sphere>
-      <a-text value="Bus" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
+      <a-text value="" align="center" color="#FFF" position="0 0.75 0" width="4"></a-text>
     </a-entity>
 
-    <!-- Feedback Text (Initially Hidden) -->
+    <!-- Texto de feedback (inicialmente escondido) -->
     <a-text id="feedback" value="" color="#FFF" position="0 1.5 -2.5" width="6" visible="false"></a-text>
 
-    <!-- Timer Text (Initially Hidden) -->
+    <!-- Texto do tempo (inicialmente escondido) -->
     <a-text id="timer" value="Time: 30" color="#FFF" position="0 3 -3" width="6" visible="false"></a-text>
 
-    <!-- Score Text (Initially Hidden) -->
+    <!-- Texto da pontuação (inicialmente escondido) -->
     <a-text id="score" value="Score: 0" color="#FFF" position="2 3 -3" width="6" visible="false"></a-text>
 
   </a-scene>
 
 <script>
+  // ---------- Lista de palavras ----------
+  
   const words = [
-    {portuguese: "Cachorro", correct: "option1", translations: ["Dog", "Cat", "Bird", "Fish", "Mouse"]},
-    {portuguese: "Casa", correct: "option2", translations: ["Car", "House", "Book", "Table", "Chair"]},
-    {portuguese: "Arvore", correct: "option3", translations: ["Sky", "Water", "Tree", "Cloud", "Rain"]},
-    {portuguese: "Carro", correct: "option4", translations: ["Plane", "Boat", "Bike", "Car", "Bus"]},
-    {portuguese: "Caneta", correct: "option5", translations: ["Paper", "Pencil", "Notebook", "Eraser", "Pen"]},
-    {portuguese: "Janela", correct: "option1", translations: ["Window", "Door", "Roof", "Wall", "Floor"]},
-    {portuguese: "Garrafa", correct: "option2", translations: ["Fork", "Bottle", "Knife", "Plate", "Glass"]},
-    {portuguese: "Floresta", correct: "option3", translations: ["Beach", "Mountain", "Forest", "Desert", "Valley"]},
-    {portuguese: "Trem", correct: "option4", translations: ["Plane", "Car", "Boat", "Train", "Bike"]},
-    {portuguese: "Relogio", correct: "option5", translations: ["Clock", "Calendar", "Watch", "Phone", "Computer"]},
-    {portuguese: "Jaqueta", correct: "option1", translations: ["Jacket", "Shirt", "Pants", "Shoes", "Hat"]},
-    {portuguese: "Biblioteca", correct: "option3", translations: ["School", "Office", "Library", "Hospital", "Restaurant"]},
-    {portuguese: "Ponte", correct: "option2", translations: ["Tunnel", "Bridge", "Road", "Path", "Highway"]},
-    {portuguese: "Camera", correct: "option4", translations: ["Radio", "Phone", "TV", "Camera", "Tablet"]},
-    {portuguese: "Quebra-cabeça", correct: "option2", translations: ["Game", "Puzzle", "Quiz", "Test", "Challenge"]},
-    {portuguese: "Rua", correct: "option1", translations: ["Street", "Avenue", "Boulevard", "Road", "Path"]},
-    {portuguese: "Escola", correct: "option1", translations: ["School", "College", "University", "Library", "Office"]},
-    {portuguese: "Rio", correct: "option3", translations: ["Ocean", "Sea", "River", "Lake", "Pond"]},
-    {portuguese: "Fruta", correct: "option1", translations: ["Fruit", "Vegetable", "Meat", "Bread", "Dairy"]},
-    {portuguese: "Sol", correct: "option4", translations: ["Moon", "Star", "Planet", "Sun", "Comet"]},
-    {portuguese: "Livro", correct: "option3", translations: ["Magazine", "Newspaper", "Book", "Journal", "Comic"]},
-    {portuguese: "Telefone", correct: "option2", translations: ["Tablet", "Phone", "Laptop", "Desktop", "Monitor"]},
-    {portuguese: "Cadeira", correct: "option1", translations: ["Chair", "Table", "Desk", "Sofa", "Bed"]},
-    {portuguese: "Aviao", correct: "option4", translations: ["Train", "Bus", "Car", "Plane", "Bicycle"]},
-    {portuguese: "Mapa", correct: "option1", translations: ["Map", "Atlas", "Globe", "Chart", "Diagram"]},
-    {portuguese: "Flor", correct: "option1", translations: ["Flower", "Tree", "Plant", "Bush", "Grass"]},
-    {portuguese: "Computador", correct: "option2", translations: ["Mouse", "Computer", "Keyboard", "Monitor", "Printer"]},
-    {portuguese: "Estrela", correct: "option1", translations: ["Star", "Moon", "Planet", "Sun", "Galaxy"]},
-    {portuguese: "Chave", correct: "option4", translations: ["Lock", "Door", "Window", "Key", "Handle"]},
-    {portuguese: "Papel", correct: "option3", translations: ["Pen", "Notebook", "Paper", "Folder", "Clip"]},
-    {portuguese: "Montanha", correct: "option2", translations: ["Hill", "Mountain", "Valley", "Plateau", "Plain"]},
-    {portuguese: "Sapo", correct: "option1", translations: ["Frog", "Toad", "Lizard", "Snake", "Turtle"]},
-    {portuguese: "Chocolate", correct: "option2", translations: ["Candy", "Chocolate", "Cake", "Cookie", "Ice Cream"]},
-    {portuguese: "Bolsa", correct: "option1", translations: ["Bag", "Wallet", "Purse", "Backpack", "Suitcase"]},
-    {portuguese: "Engenharia de software", correct: "option5", translations: ["Phone", "Engineering Software", "Laptop", "Computer", "Software engineering"]}
+    // Palavras originais do quiz
+    {portuguese: "Cachorro", answer: "Dog", wrong: ["Cat", "Bird", "Fish", "Mouse"]},
+    {portuguese: "Casa", answer: "House", wrong: ["Car", "Book", "Table", "Chair"]},
+    {portuguese: "Árvore", answer: "Tree", wrong: ["Sky", "Water", "Cloud", "Rain"]},
+    {portuguese: "Carro", answer: "Car", wrong: ["Plane", "Boat", "Bike", "Bus"]},
+    {portuguese: "Caneta", answer: "Pen", wrong: ["Paper", "Pencil", "Notebook", "Eraser"]},
+    {portuguese: "Janela", answer: "Window", wrong: ["Door", "Roof", "Wall", "Floor"]},
+    {portuguese: "Garrafa", answer: "Bottle", wrong: ["Fork", "Knife", "Plate", "Glass"]},
+    {portuguese: "Floresta", answer: "Forest", wrong: ["Beach", "Mountain", "Desert", "Valley"]},
+    {portuguese: "Trem", answer: "Train", wrong: ["Plane", "Car", "Boat", "Bike"]},
+    {portuguese: "Relógio", answer: "Clock", wrong: ["Calendar", "Phone", "Computer", "Radio"]},
+    {portuguese: "Jaqueta", answer: "Jacket", wrong: ["Shirt", "Pants", "Shoes", "Hat"]},
+    {portuguese: "Biblioteca", answer: "Library", wrong: ["School", "Office", "Hospital", "Restaurant"]},
+    {portuguese: "Ponte", answer: "Bridge", wrong: ["Tunnel", "Road", "Path", "Highway"]},
+    {portuguese: "Câmera", answer: "Camera", wrong: ["Radio", "Phone", "TV", "Tablet"]},
+    {portuguese: "Quebra-cabeça", answer: "Puzzle", wrong: ["Game", "Quiz", "Test", "Challenge"]},
+    {portuguese: "Rua", answer: "Street", wrong: ["Avenue", "Boulevard", "Road", "Path"]},
+    {portuguese: "Escola", answer: "School", wrong: ["College", "University", "Library", "Office"]},
+    {portuguese: "Rio", answer: "River", wrong: ["Ocean", "Sea", "Lake", "Pond"]},
+    {portuguese: "Fruta", answer: "Fruit", wrong: ["Vegetable", "Meat", "Bread", "Dairy"]},
+    {portuguese: "Sol", answer: "Sun", wrong: ["Moon", "Star", "Planet", "Comet"]},
+    {portuguese: "Livro", answer: "Book", wrong: ["Magazine", "Newspaper", "Journal", "Comic"]},
+    {portuguese: "Telefone", answer: "Phone", wrong: ["Tablet", "Laptop", "Desktop", "Monitor"]},
+    {portuguese: "Cadeira", answer: "Chair", wrong: ["Table", "Desk", "Sofa", "Bed"]},
+    {portuguese: "Avião", answer: "Plane", wrong: ["Train", "Bus", "Car", "Bicycle"]},
+    {portuguese: "Mapa", answer: "Map", wrong: ["Atlas", "Globe", "Chart", "Diagram"]},
+    {portuguese: "Flor", answer: "Flower", wrong: ["Tree", "Plant", "Bush", "Grass"]},
+    {portuguese: "Computador", answer: "Computer", wrong: ["Mouse", "Keyboard", "Monitor", "Printer"]},
+    {portuguese: "Estrela", answer: "Star", wrong: ["Moon", "Planet", "Sun", "Galaxy"]},
+    {portuguese: "Chave", answer: "Key", wrong: ["Lock", "Door", "Window", "Handle"]},
+    {portuguese: "Papel", answer: "Paper", wrong: ["Pen", "Notebook", "Folder", "Clip"]},
+    {portuguese: "Montanha", answer: "Mountain", wrong: ["Hill", "Valley", "Plateau", "Plain"]},
+    {portuguese: "Sapo", answer: "Frog", wrong: ["Toad", "Lizard", "Snake", "Turtle"]},
+    {portuguese: "Chocolate", answer: "Chocolate", wrong: ["Candy", "Cake", "Cookie", "Ice Cream"]},
+    {portuguese: "Bolsa", answer: "Bag", wrong: ["Wallet", "Backpack", "Suitcase", "Belt"]},
+    {portuguese: "Engenharia de software", answer: "Software engineering", wrong: ["Phone", "Engineering Software", "Laptop", "Computer"]},
+
+    {portuguese: "Gato", answer: "Cat", wrong: ["Cow", "Lion", "Bee", "Whale"]},
+    {portuguese: "Pássaro", answer: "Bird", wrong: ["Cow", "Duck", "Wolf", "Butterfly"]},
+    {portuguese: "Peixe", answer: "Fish", wrong: ["Bear", "Spider", "Butterfly", "Dolphin"]},
+    {portuguese: "Cavalo", answer: "Horse", wrong: ["Mouse", "Turtle", "Spider", "Snake"]},
+    {portuguese: "Vaca", answer: "Cow", wrong: ["Duck", "Cat", "Wolf", "Fish"]},
+    {portuguese: "Porco", answer: "Pig", wrong: ["Horse", "Monkey", "Snake", "Cat"]},
+    {portuguese: "Ovelha", answer: "Sheep", wrong: ["Shark", "Turtle", "Lion", "Chicken"]},
+    {portuguese: "Galinha", answer: "Chicken", wrong: ["Tiger", "Rabbit", "Elephant", "Dolphin"]},
+    {portuguese: "Pato", answer: "Duck", wrong: ["Bee", "Whale", "Fish", "Dolphin"]},
+    {portuguese: "Coelho", answer: "Rabbit", wrong: ["Lion", "Fish", "Butterfly", "Monkey"]},
+    {portuguese: "Macaco", answer: "Monkey", wrong: ["Rabbit", "Snake", "Cow", "Whale"]},
+    {portuguese: "Leão", answer: "Lion", wrong: ["Owl", "Spider", "Rabbit", "Cat"]},
+    {portuguese: "Elefante", answer: "Elephant", wrong: ["Owl", "Lion", "Snake", "Bear"]},
+    {portuguese: "Tigre", answer: "Tiger", wrong: ["Fish", "Elephant", "Spider", "Butterfly"]},
+    {portuguese: "Urso", answer: "Bear", wrong: ["Turtle", "Horse", "Tiger", "Bee"]},
+    {portuguese: "Cobra", answer: "Snake", wrong: ["Mouse", "Wolf", "Turtle", "Elephant"]},
+    {portuguese: "Tartaruga", answer: "Turtle", wrong: ["Bee", "Duck", "Tiger", "Spider"]},
+    {portuguese: "Abelha", answer: "Bee", wrong: ["Snake", "Turtle", "Cat", "Spider"]},
+    {portuguese: "Borboleta", answer: "Butterfly", wrong: ["Chicken", "Mouse", "Cow", "Bird"]},
+    {portuguese: "Aranha", answer: "Spider", wrong: ["Owl", "Turtle", "Shark", "Horse"]},
+    {portuguese: "Maçã", answer: "Apple", wrong: ["Potato", "Lemon", "Coffee", "Bread"]},
+    {portuguese: "Banana", answer: "Banana", wrong: ["Coffee", "Water", "Milk", "Salt"]},
+    {portuguese: "Uva", answer: "Grape", wrong: ["Beans", "Sugar", "Coffee", "Honey"]},
+    {portuguese: "Morango", answer: "Strawberry", wrong: ["Juice", "Honey", "Pizza", "Sugar"]},
+    {portuguese: "Leite", answer: "Milk", wrong: ["Rice", "Honey", "Salt", "Butter"]},
+    {portuguese: "Pão", answer: "Bread", wrong: ["Coffee", "Pizza", "Lemon", "Egg"]},
+    {portuguese: "Queijo", answer: "Cheese", wrong: ["Rice", "Juice", "Apple", "Banana"]},
+    {portuguese: "Ovo", answer: "Egg", wrong: ["Milk", "Salt", "Potato", "Beans"]},
+    {portuguese: "Água", answer: "Water", wrong: ["Butter", "Coffee", "Soup", "Cheese"]},
+    {portuguese: "Suco", answer: "Juice", wrong: ["Water", "Coffee", "Beans", "Butter"]},
+    {portuguese: "Arroz", answer: "Rice", wrong: ["Coffee", "Lemon", "Honey", "Sugar"]},
+    {portuguese: "Bolo", answer: "Cake", wrong: ["Banana", "Juice", "Rice", "Beans"]},
+    {portuguese: "Sopa", answer: "Soup", wrong: ["Strawberry", "Beans", "Butter", "Water"]},
+    {portuguese: "Pizza", answer: "Pizza", wrong: ["Beans", "Bread", "Lemon", "Coffee"]},
+    {portuguese: "Lua", answer: "Moon", wrong: ["Rain", "Island", "Sea", "Fire"]},
+    {portuguese: "Nuvem", answer: "Cloud", wrong: ["Beach", "Rain", "Wind", "Stone"]},
+    {portuguese: "Chuva", answer: "Rain", wrong: ["Snow", "Fire", "Moon", "Cloud"]},
+    {portuguese: "Neve", answer: "Snow", wrong: ["Moon", "Fire", "Lake", "Sky"]},
+    {portuguese: "Vento", answer: "Wind", wrong: ["Leaf", "Cloud", "Lake", "Snow"]},
+    {portuguese: "Mar", answer: "Sea", wrong: ["Snow", "Cloud", "Lake", "Moon"]},
+    {portuguese: "Praia", answer: "Beach", wrong: ["Grass", "Sky", "Wind", "Island"]},
+    {portuguese: "Pedra", answer: "Stone", wrong: ["Grass", "Island", "Sea", "Rain"]},
+    {portuguese: "Fogo", answer: "Fire", wrong: ["Moon", "Sea", "Island", "Lake"]},
+    {portuguese: "Céu", answer: "Sky", wrong: ["Lake", "Grass", "Stone", "Rain"]},
+    {portuguese: "Cabeça", answer: "Head", wrong: ["Heart", "Nose", "Leg", "Eye"]},
+    {portuguese: "Mão", answer: "Hand", wrong: ["Teeth", "Heart", "Mouth", "Foot"]},
+    {portuguese: "Pé", answer: "Foot", wrong: ["Arm", "Hair", "Eye", "Teeth"]},
+    {portuguese: "Olho", answer: "Eye", wrong: ["Teeth", "Mouth", "Heart", "Arm"]},
+    {portuguese: "Nariz", answer: "Nose", wrong: ["Arm", "Foot", "Heart", "Eye"]},
+    {portuguese: "Boca", answer: "Mouth", wrong: ["Arm", "Head", "Hand", "Finger"]},
+    {portuguese: "Orelha", answer: "Ear", wrong: ["Hand", "Head", "Mouth", "Teeth"]},
+    {portuguese: "Braço", answer: "Arm", wrong: ["Head", "Finger", "Heart", "Leg"]},
+    {portuguese: "Perna", answer: "Leg", wrong: ["Mouth", "Hair", "Nose", "Arm"]},
+    {portuguese: "Coração", answer: "Heart", wrong: ["Mouth", "Hand", "Arm", "Teeth"]},
+    {portuguese: "Porta", answer: "Door", wrong: ["Backpack", "Pencil", "Ball", "Sofa"]},
+    {portuguese: "Mesa", answer: "Table", wrong: ["Wall", "Plate", "Toy", "Floor"]},
+    {portuguese: "Cama", answer: "Bed", wrong: ["Lamp", "Knife", "Table", "Mirror"]},
+    {portuguese: "Lâmpada", answer: "Lamp", wrong: ["Backpack", "Table", "Roof", "Toy"]},
+    {portuguese: "Espelho", answer: "Mirror", wrong: ["Ball", "Sofa", "Door", "Bed"]},
+    {portuguese: "Lápis", answer: "Pencil", wrong: ["Roof", "Ball", "Mirror", "Bed"]},
+    {portuguese: "Mochila", answer: "Backpack", wrong: ["Pencil", "Knife", "Kitchen", "Ball"]},
+    {portuguese: "Bola", answer: "Ball", wrong: ["Floor", "Fork", "Bed", "Backpack"]},
+    {portuguese: "Brinquedo", answer: "Toy", wrong: ["Garden", "Pencil", "Spoon", "Bed"]},
+    {portuguese: "Cozinha", answer: "Kitchen", wrong: ["Toy", "Plate", "Sofa", "Knife"]},
+    {portuguese: "Jardim", answer: "Garden", wrong: ["Fork", "Kitchen", "Plate", "Bed"]},
+    {portuguese: "Parede", answer: "Wall", wrong: ["Garden", "Roof", "Sofa", "Ball"]},
+    {portuguese: "Colher", answer: "Spoon", wrong: ["Lamp", "Roof", "Toy", "Fork"]},
+    {portuguese: "Faca", answer: "Knife", wrong: ["Lamp", "Backpack", "Ball", "Door"]},
+    {portuguese: "Ônibus", answer: "Bus", wrong: ["Bicycle", "Ship", "Plane", "Truck"]},
+    {portuguese: "Barco", answer: "Boat", wrong: ["Car", "Plane", "Bicycle", "Bus"]},
+    {portuguese: "Bicicleta", answer: "Bicycle", wrong: ["Plane", "Train", "Boat", "Truck"]},
+    {portuguese: "Caminhão", answer: "Truck", wrong: ["Ship", "Bus", "Car", "Bicycle"]},
+    {portuguese: "Navio", answer: "Ship", wrong: ["Plane", "Motorcycle", "Bicycle", "Truck"]},
+    {portuguese: "Camisa", answer: "Shirt", wrong: ["Coat", "Pants", "Glove", "Hat"]},
+    {portuguese: "Sapato", answer: "Shoe", wrong: ["Hat", "Skirt", "Sock", "Shirt"]},
+    {portuguese: "Chapéu", answer: "Hat", wrong: ["Skirt", "Shoe", "Shirt", "Pants"]},
+    {portuguese: "Meia", answer: "Sock", wrong: ["Pants", "Glove", "Shoe", "Shirt"]},
+    {portuguese: "Vestido", answer: "Dress", wrong: ["Pants", "Hat", "Coat", "Shirt"]},
+    {portuguese: "Casaco", answer: "Coat", wrong: ["Dress", "Hat", "Shoe", "Skirt"]},
+    {portuguese: "Mãe", answer: "Mother", wrong: ["Teacher", "Brother", "Father", "Girl"]},
+    {portuguese: "Pai", answer: "Father", wrong: ["Teacher", "Girl", "Mother", "Baby"]},
+    {portuguese: "Irmão", answer: "Brother", wrong: ["Father", "Friend", "Mother", "Teacher"]},
+    {portuguese: "Irmã", answer: "Sister", wrong: ["Father", "Doctor", "Baby", "Boy"]},
+    {portuguese: "Amigo", answer: "Friend", wrong: ["Boy", "Grandmother", "Mother", "Girl"]},
+    {portuguese: "Professor", answer: "Teacher", wrong: ["Boy", "Grandfather", "Sister", "Grandmother"]},
+    {portuguese: "Menino", answer: "Boy", wrong: ["Girl", "Father", "Teacher", "Friend"]},
+    {portuguese: "Menina", answer: "Girl", wrong: ["Boy", "Friend", "Teacher", "Mother"]},
+    {portuguese: "Avó", answer: "Grandmother", wrong: ["Boy", "Mother", "Friend", "Teacher"]},
+    {portuguese: "Bebê", answer: "Baby", wrong: ["Friend", "Father", "Doctor", "Boy"]},
+    {portuguese: "Azul", answer: "Blue", wrong: ["Purple", "Red", "White", "Yellow"]},
+    {portuguese: "Vermelho", answer: "Red", wrong: ["Black", "Blue", "Purple", "Pink"]},
+    {portuguese: "Verde", answer: "Green", wrong: ["Yellow", "Red", "Blue", "Brown"]},
+    {portuguese: "Amarelo", answer: "Yellow", wrong: ["Green", "Purple", "White", "Pink"]},
+    {portuguese: "Preto", answer: "Black", wrong: ["White", "Blue", "Yellow", "Gray"]},
+    {portuguese: "Branco", answer: "White", wrong: ["Green", "Purple", "Yellow", "Brown"]},
+    {portuguese: "Roxo", answer: "Purple", wrong: ["Brown", "Yellow", "Gray", "Pink"]},
+    {portuguese: "Dia", answer: "Day", wrong: ["Morning", "Week", "Today", "Hour"]},
+    {portuguese: "Noite", answer: "Night", wrong: ["Hour", "Day", "Today", "Month"]},
+    {portuguese: "Semana", answer: "Week", wrong: ["Year", "Night", "Morning", "Day"]},
+    {portuguese: "Ano", answer: "Year", wrong: ["Day", "Week", "Hour", "Month"]}
   ];
 
-  let currentWordIndex = 0;
-  let chances = 3;
-  let score = 0;
-  let timeLeft = 30;
-  let selectedOption = null;
-  let isGameActive = false; // Verifica se o jogo está ativo
-  let countdown = null; // Variável para o temporizador
+  // Embaralha uma lista (algoritmo de Fisher-Yates)
+  function embaralhar(lista) {
+    for (let i = lista.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [lista[i], lista[j]] = [lista[j], lista[i]];
+    }
+    return lista;
+  }
+  embaralhar(words); // a ordem das palavras muda a cada partida
+
+  // ---------- Estado do jogo ----------
+  let currentWordIndex = 0;       // posição da palavra atual na lista
+  let chances = 3;                // chances por palavra
+  let score = 0;                  // pontuação total
+  let timeLeft = 30;              // tempo restante para a palavra atual, em segundos
+  let selectedOption = null;      // esfera para a qual o cursor está apontando
+  let respostaCorreta = null;     // id da esfera que tem a resposta certa (sorteada a cada palavra)
+  let isGameActive = false;       // true enquanto o jogo está rodando
+  let jogoIniciado = false;       // evita iniciar o jogo duas vezes ao apertar Enter de novo
+  let aguardando = false;         // true entre o fim da palavra e o fechamento do alerta (pausa o tempo)
+  let countdown = null;           // guarda o temporizador (setInterval)
+
+  // Cor das esferas quando o cursor está em cima (cada esfera volta à sua cor original ao sair)
+  const COR_SELECIONADA = '#FFD700';
+  const CORES_ORIGINAIS = {
+    option1: '#4CC3D9', option2: '#EF2D5E', option3: '#24CAFF', option4: '#FF6347', option5: '#9ACD32'
+  };
 
   const timerElement = document.querySelector('#timer');
   const feedbackElement = document.querySelector('#feedback');
   const targetWordElement = document.querySelector('#target-word');
   const scoreElement = document.querySelector('#score');
-    
-  // Função para carregar a próxima palavra
+
+  // Mostra no cartão de instruções quantas palavras o quiz tem
+  document.querySelector('#instrucao-palavras').setAttribute(
+    'value', `1. 30 segundos por palavra, ${words.length} palavras no total.`);
+
+  // Desenha o texto em português no canvas (aceita acentos e "ç", ao contrário da fonte padrão do A-Frame)
+  function desenharPalavraPortugues(texto) {
+    const canvas = document.querySelector('#canvas-portugues');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Diminui a fonte se o texto for largo demais para o canvas
+    let tamanho = 84;
+    ctx.font = `bold ${tamanho}px Arial, Helvetica, sans-serif`;
+    while (ctx.measureText(texto).width > canvas.width - 40 && tamanho > 30) {
+      tamanho -= 4;
+      ctx.font = `bold ${tamanho}px Arial, Helvetica, sans-serif`;
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#000000';   // contorno escuro para facilitar a leitura
+    ctx.strokeText(texto, canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
+
+    // Avisa o A-Frame que o canvas mudou, para ele atualizar a textura
+    const malha = targetWordElement.getObject3D('mesh');
+    if (malha && malha.material && malha.material.map) {
+      malha.material.map.needsUpdate = true;
+    }
+  }
+
+  // Carrega a próxima palavra (ou encerra o quiz se acabaram as palavras)
   function loadWord() {
     if (currentWordIndex >= words.length) {
-      feedbackElement.setAttribute('value', `Parabens! Voce completou o quiz com ${score} pontos.`);
       isGameActive = false;
       clearInterval(countdown);
+      feedbackElement.setAttribute('value', `Parabens! Voce completou o quiz com ${score} pontos.`);
+      aguardando = true;
+      setTimeout(function() {
+        alert(`Parabéns! Você completou o quiz com ${score} pontos.`);
+        aguardando = false;
+      }, 300);
       return;
     }
 
     const word = words[currentWordIndex];
-    targetWordElement.setAttribute('value', `Traduza: ${word.portuguese}`);
+    desenharPalavraPortugues(`Traduza: ${word.portuguese}`);
 
-    // Configurar as traduções nas esferas
+    // Sorteia a posição das 5 opções e descobre em qual esfera ficou a resposta certa
+    const opcoes = embaralhar([word.answer, ...word.wrong]);
+    respostaCorreta = 'option' + (opcoes.indexOf(word.answer) + 1);
+
+    // Coloca as traduções nas esferas
     for (let i = 1; i <= 5; i++) {
-      document.querySelector(`#option${i} a-text`).setAttribute('value', word.translations[i-1]);
+      document.querySelector(`#option${i} a-text`).setAttribute('value', opcoes[i - 1]);
     }
 
-    // Reiniciar o cronômetro para cada palavra
+    // Reinicia o cronômetro para cada palavra
     timeLeft = 30;
     timerElement.setAttribute('value', 'Time: ' + timeLeft);
   }
 
-  // Lógica do temporizador
+  // Termina a palavra atual (acerto, fim das chances ou tempo esgotado):
+  // mostra um alerta com a resposta e só depois segue para a próxima palavra.
+  function encerrarPalavra(motivo) {
+    const word = words[currentWordIndex];
+    aguardando = true;      // pausa o tempo e ignora o Espaço enquanto o alerta aparece
+    currentWordIndex++;
+    chances = 3;            // reinicia as chances para a próxima palavra
+
+    // Pequena espera para a tela atualizar o placar antes de o alerta travar a página
+    setTimeout(function() {
+      if (motivo === 'acerto') {
+        alert(`Correto! ${word.portuguese} = ${word.answer}\nPontos: ${score}`);
+      } else if (motivo === 'chances') {
+        alert(`Fim das chances! ${word.portuguese} = ${word.answer}`);
+      } else {
+        alert(`Tempo esgotado! ${word.portuguese} = ${word.answer}`);
+      }
+      feedbackElement.setAttribute('value', '');
+      aguardando = false;
+      loadWord();
+    }, 300);
+  }
+
+  // Lógica do temporizador: diminui 1 segundo por vez. Fica parado enquanto há um alerta aberto.
   function startTimer() {
     countdown = setInterval(function() {
       if (!isGameActive) {
         clearInterval(countdown);
         return;
       }
+      if (aguardando) return;
 
       if (timeLeft > 0) {
         timeLeft--;
         timerElement.setAttribute('value', 'Time: ' + timeLeft);
       } else {
         feedbackElement.setAttribute('value', 'Tempo Esgotado!');
-        currentWordIndex++;
-        chances = 3; // Reiniciar as chances para a próxima palavra
-        setTimeout(() => {
-          feedbackElement.setAttribute('value', '');
-          loadWord();
-        }, 1000);
+        encerrarPalavra('tempo');
       }
     }, 1000);
   }
 
-  // Detectar qual esfera está sendo observada
+  // Detecta qual esfera está sendo apontada pelo cursor.
+  // Enquanto o cursor está em cima, a esfera muda de cor.
   document.querySelectorAll('.option').forEach(function(option) {
+    const esfera = option.querySelector('a-sphere');
     option.addEventListener('mouseenter', function () {
       selectedOption = option.getAttribute('id');
+      esfera.setAttribute('color', COR_SELECIONADA);
     });
     option.addEventListener('mouseleave', function () {
       selectedOption = null;
+      esfera.setAttribute('color', CORES_ORIGINAIS[option.getAttribute('id')]);
     });
   });
 
-  // Lidar com a tecla espaço para confirmar a escolha
+  // Tecla Espaço: confirma a esfera escolhida
   document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' && selectedOption && isGameActive) {
-      const word = words[currentWordIndex];
-
-      if (selectedOption === word.correct) {
-        feedbackElement.setAttribute('value', 'Correto!');
+    if (event.code === 'Space' && selectedOption && isGameActive && !aguardando) {
+      if (selectedOption === respostaCorreta) {
+        // Acertou: soma ponto e mostra o alerta
         score++;
         scoreElement.setAttribute('value', `Score: ${score}`);
-        currentWordIndex++;
-        setTimeout(() => {
-          feedbackElement.setAttribute('value', '');
-          chances = 3; // Reiniciar as chances para a próxima palavra
-          loadWord();
-        }, 1000);
+        feedbackElement.setAttribute('value', 'Correto!');
+        encerrarPalavra('acerto');
       } else {
+        // Errou: perde uma chance (o número de chances continua aparecendo na tela)
         chances--;
         feedbackElement.setAttribute('value', `Tente Novamente! Chances restantes: ${chances}`);
         if (chances <= 0) {
-          currentWordIndex++;
-          chances = 3;
-          setTimeout(() => {
-            feedbackElement.setAttribute('value', '');
-            loadWord();
-          }, 1000);
+          encerrarPalavra('chances');
         }
       }
     }
   });
 
-  // Função para iniciar o jogo
+  // Inicia o jogo: esconde as instruções e mostra os elementos do quiz
   function startGame() {
-    isGameActive = true; // Ativa o jogo
+    if (jogoIniciado) return; // só inicia uma vez
+    jogoIniciado = true;
+    isGameActive = true;
+
     document.querySelector('#instruction-card').setAttribute('visible', 'false');
     document.querySelector('#target-word').setAttribute('visible', 'true');
     document.querySelectorAll('.option').forEach(option => {
@@ -219,19 +408,18 @@
     document.querySelector('#feedback').setAttribute('visible', 'true');
     document.querySelector('#timer').setAttribute('visible', 'true');
     document.querySelector('#score').setAttribute('visible', 'true');
-    
-    // Carregar a primeira palavra e iniciar o cronômetro
+
+    // Carrega a primeira palavra e inicia o cronômetro
     loadWord();
     startTimer();
   }
 
-  // Detectar tecla Enter para iniciar o jogo
+  // Tecla Enter: começa o jogo
   document.addEventListener('keydown', function(event) {
-    if (event.code === 'Enter' && !isGameActive) {
+    if (event.code === 'Enter') {
       startGame();
     }
   });
-
 </script>
 </body>
 </html>
