@@ -15,6 +15,29 @@
   <link rel="stylesheet" href="css/style.css"> 
   <!-- Link para o arquivo JavaScript -->
   <script src="js/script.js"></script> 
+  
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <style>
+    /* Força a barra do A-Frame (onde fica o botão de VR) a ficar acima da interface */
+    .a-enter-vr {
+      z-index: 9999 !important;
+      bottom: 20px;
+      right: 20px;
+    }
+    /* Ajuste dos botões para alinhar o ícone e o texto */
+    .acoes button, #jogos button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    /* Deixa o ícone um pouco maior */
+    .acoes button svg, #jogos button svg {
+      width: 22px;
+      height: 22px;
+    }
+  </style>
 </head>
 <body>
   <div id="menu">
@@ -27,9 +50,18 @@
       </h1>
       <h2>Realidade virtual para aprendizado escolar!</h2>
       <div class="acoes">
-        <button id="show-about">Sobre o Projeto</button>
-        <button id="show-instructions">Instruções</button>
-        <button id="start-game">Área de Jogos</button>
+        <button id="show-about">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          Sobre o Projeto
+        </button>
+        <button id="show-instructions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          Instruções
+        </button>
+        <button id="start-game">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"></path></svg>
+          Área de Jogos
+        </button>
       </div>
     </div>
   </div>
@@ -44,7 +76,7 @@
         <li>Para selecionar um objeto, aponte o cursor e pressione a tecla <kbd>Espaço</kbd>.</li>
         <li>Mantenha-se atento ao tempo e à pontuação exibidos no topo da tela.</li>
       </ol>
-      <button id="back-to-menu-instrucoes">&#8592; Voltar ao Menu</button>
+      <button id="back-to-menu-instrucoes">⬅️ Voltar ao Menu</button>
     </div>
   </div>
 
@@ -55,24 +87,40 @@
       <p>Sobre o projeto "Mundo em 3D": é uma iniciativa inovadora do curso de Engenharia de Software da Universidade Estadual de Ponta Grossa (UEPG), situada no Paraná, voltada para a integração de tecnologias emergentes no ambiente educacional. Seu objetivo principal é explorar o potencial da Realidade Virtual (VR) como ferramenta pedagógica para enriquecer o processo de ensino-aprendizagem em escolas da região.</p>
       <p>A Realidade Virtual cria ambientes completamente digitais, permitindo que os estudantes sejam imersos em mundos virtuais onde podem interagir com objetos e cenários tridimensionais. Por meio deste projeto, a UEPG busca transformar a maneira como os conteúdos escolares são apresentados, proporcionando uma experiência educacional mais envolvente e interativa.</p>
       <p>As tecnologias usadas são HTML, CSS, JS e o framework A-Frame com VR para Web. O projeto foi desenvolvido pelos acadêmicos Michel e Caroline, no 2º ano do curso de Engenharia de Software.</p>
-      <button id="back-to-menu-sobre">&#8592; Voltar ao Menu</button>
+      <button id="back-to-menu-sobre">⬅️ Voltar ao Menu</button>
     </div>
   </div>
 
   <div id="jogos">
     <div class="cartao">
       <h1>Escolha um jogo</h1>
-      <button onclick="window.location.href='quiz.html'">Quiz Interativo</button>
-      <button onclick="window.location.href='forca.html'">Jogo da Forca</button>
-      <button onclick="window.location.href='caca_tesouro.html'">Caça ao Tesouro</button>
-      <button id="back-to-menu-jogos">&#8592; Voltar ao Menu</button>
+      <button onclick="window.location.href='quiz.html'">
+        <!-- Ícone de Cérebro (Quiz) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path></svg>
+        Quiz Interativo
+      </button>
+      <button onclick="window.location.href='forca.html'">
+        <!-- Ícone de Letras (Forca) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"></path><path d="M9 20h6"></path><path d="M12 4v16"></path><path d="M7 11h10"></path><path d="M7 15h10"></path></svg>
+        Jogo da Forca
+      </button>
+      <button onclick="window.location.href='caca_tesouro.html'">
+        <!-- Ícone de Troféu (Caça ao Tesouro) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
+        Caça ao Tesouro
+      </button>
+      <button id="back-to-menu-jogos">⬅️ Voltar ao Menu</button>
     </div>
   </div>
 
-  <!-- Música de fundo (arquivo local, controlado pelo js/script.js) -->
+  <!-- Música de fundo -->
   <audio id="background-music" src="audio/background-music.mp3" loop preload="auto"></audio>
 
   <button id="music-control" class="music-button">♪ Tocar música</button>
   <div class="snow"></div>
+
+  <!-- Cena do A-Frame real (invisível) para carregar o botão de VR -->
+  <a-scene embedded vr-mode-ui="enabled: true; enterVRButton: #myEnterVRButton" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1;"></a-scene>
+
 </body>
 </html>
