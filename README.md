@@ -8,17 +8,17 @@ O projeto utiliza tecnologias web (HTML, CSS, JS e o framework **A-Frame**) para
 
 O projeto conta com um menu inicial em 2D e uma "Área de Jogos" com três experiências em Realidade Virtual:
 
-### 1. 🏆 Caça ao Tesouro 3D
+### 1. 🏆 Caça ao Tesouro 3D - Planeta Verdelume
 - **Cenário:** Floresta.
 - **Objetivo:** Traduzir a palavra em português exibida no HUD e encontrar as letras certas espalhadas pelo cenário 3D.
 - **Mecânica:** O jogador tem 10 minutos para completar as palavras. Use o cursor para apontar para as esferas azuis e aperte **ESPAÇO** para confirmar a letra. O progresso é mostrado no quadro de letras abaixo do HUD.
 
-### 2. 🔤 Jogo da Forca
+### 2. 🔤 Jogo da Forca - Planeta Nox
 - **Cenário:** Céu estrelado.
 - **Objetivo:** Adivinhar a tradução correta da palavra em português antes que as 6 chances acabem.
 - **Mecânica:** O alfabeto completo (A-Z) está flutuando na cena. Aponte o cursor para uma letra e aperte **ESPAÇO** para tentar. O jogo tem um tempo total de 10 minutos. Pontos são ganhos com base nas chances restantes.
 
-### 3. 🧠 Quiz Interativo
+### 3. 🧠 Quiz Interativo - Planeta Aurum
 - **Cenário:** Mina de Ouro.
 - **Objetivo:** Escolher a tradução correta entre 5 opções de esferas coloridas.
 - **Mecânica:** O jogador tem 30 segundos por palavra e 3 chances de erro. Acertos valem 10 pontos. O HUD exibe o Tempo, Score e o contador de Acertos/Faltam.
