@@ -1,4 +1,4 @@
-# 🌍 Mundo em 3D: A Aventura em Palavras (UEPG)
+# 🌍 MUNDO EM 3D: AVENTURA INTERGALÁCTICA EM PALAVRAS (UEPG)
 
 Projeto de extensão para a disciplina de Prática Extensionista 3, realizado no ano de 2024, do curso de **Engenharia de Software da Universidade Estadual de Ponta Grossa (UEPG)**, no Paraná. O objetivo principal é explorar o potencial da Realidade Virtual (VR) como ferramenta pedagógica para enriquecer o processo de ensino-aprendizagem de inglês em escolas da região.
 
