@@ -41,13 +41,13 @@ O projeto conta com um menu inicial em 2D e uma "Área de Jogos" com três exper
 ### Instruções dos Jogos
 ![Menu Principal](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/instruções-mundoem3d.png)
 
-### Quiz Interativo
+### Quiz Interativo - Planeta Aurum
 ![Quiz Interativo](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/quiz-mundoem3d.png)
 
-### Jogo da Forca
+### Jogo da Forca - Planeta Nox
 ![Jogo da Forca](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/forca-mundoem3d.png)
 
-### Caça ao Tesouro
+### Caça ao Tesouro - Planeta Verdelume
 ![Caça ao Tesouro](https://raw.githubusercontent.com/micheldelima/mundoem3d/main/img/caçatesouro-mundoem3d.png)
 
 
@@ -73,9 +73,9 @@ mundoem3d/
 ```
 # Acesso Online
 ### O projeto está hospedado e publicado via GitHub Pages e pode ser jogado diretamente pelo navegador.
-🌍 Link: [https://micheldelima.github.io/mundoem3d/](https://micheldelima.github.io/mundoem3d)
+### Link: [https://micheldelima.github.io/mundoem3d/](https://micheldelima.github.io/mundoem3d)
 
-# Clone este repositório:
+# Clonar este repositório
 ### git clone https://github.com/micheldelima/mundoem3d.git
 
 # 👨‍💻 Autores do projeto
